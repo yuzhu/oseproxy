@@ -1,4 +1,4 @@
-package UCB.OSEProxy;
+package ucb.oseproxy;
 
 //STEP 1. Import required packages
 import java.sql.*;
@@ -10,7 +10,7 @@ public class App {
 
  //  Database credentials
  static final String USER = "username";
- static final String PASS = "password";
+ static final String PASS = "";
  
  public static void main(String[] args) {
  System.out.println("Hello World");
