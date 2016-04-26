@@ -1,0 +1,12 @@
+.classpath
+*.iml
+*.pyc
+*.swo
+*.swp
+.DS_STORE
+.checkstyle
+.idea/
+.metadata/
+.project
+.settings/
+target/
