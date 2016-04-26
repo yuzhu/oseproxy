@@ -35,8 +35,6 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.2</version>
           <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
             <encoding>UTF-8</encoding>
             <maxmem>1024m</maxmem>
             <compilerArgs>
