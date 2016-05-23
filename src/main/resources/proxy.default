@@ -1,0 +1,6 @@
+#Database connection
+oseproxy.dbconn.host=localhost
+oseproxy.dbconn.port=5432
+oseproxy.dbconn.username=root
+oseproxy.dbconn.password=password
+

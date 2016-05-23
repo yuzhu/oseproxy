@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "ucb.oseproxy.rpc";
+option java_outer_classname = "OSEProxyProto";
+option objc_class_prefix = "HLW";
+
+package rpc;
+
+// The greeting service definition.
+service OSEProxy {
+  // get a DB connection
+  rpc getConn (ConnRequest) returns (ConnReply) {}
+}
+
+// The request message containing the user's name.
+message ConnRequest {
+  string host = 1;
+  int32 port = 2;
+  string username = 3;
+  string password = 4;
+}
+
+// The response message containing the greetings
+message ConnReply {
+  int32 connId = 1;
+  string status = 2;
+}

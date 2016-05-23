@@ -5,8 +5,8 @@ import java.sql.*;
 
 public class App {
  // JDBC driver name and database URL
- static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
- static final String DB_URL = "jdbc:mysql://localhost/EMP";
+	static final String JDBC_DRIVER = "org.postgresql.Driver";  
+	static final String DB_URL = "jdbc:postgresql://localhost:port/EMP";
 
  //  Database credentials
  static final String USER = "username";
@@ -23,6 +23,8 @@ public class App {
     //STEP 3: Open a connection
     System.out.println("Connecting to database...");
     conn = DriverManager.getConnection(DB_URL,USER,PASS);
+    
+    
 
     //STEP 4: Execute a query
     System.out.println("Creating statement...");
@@ -69,6 +71,7 @@ public class App {
        se.printStackTrace();
     }//end finally try
  }//end try
- System.out.println("Goodbye!");
+ 
+ 
 }//end main
 }//end FirstExample
