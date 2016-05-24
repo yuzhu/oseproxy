@@ -11,6 +11,7 @@ package rpc;
 service OSEProxy {
   // get a DB connection
   rpc getConn (ConnRequest) returns (ConnReply) {}
+  rpc execQuery (QueryRequest) returns (QueryReply) {}
 }
 
 // The request message containing the user's name.
@@ -19,10 +20,20 @@ message ConnRequest {
   int32 port = 2;
   string username = 3;
   string password = 4;
+  string clientID = 100;
 }
 
 // The response message containing the greetings
 message ConnReply {
-  int32 connId = 1;
+  string connId = 1;
   string status = 2;
+}
+
+message QueryRequest {
+  string sqlquery = 1;
+  string clientID = 100;
+}
+
+message QueryReply {
+  string resultSetId = 1;
 }

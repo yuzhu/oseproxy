@@ -2,7 +2,10 @@ package ucb.oseproxy.rpc;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerCall;
 import io.grpc.stub.StreamObserver;
+import ucb.oseproxy.server.OSEServer;
+
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -62,8 +65,14 @@ public class ProxyServer {
 
     @Override
     public void getConn(ConnRequest req, StreamObserver<ConnReply> responseObserver) {
-      // get a JDBC connection and a session key to return to client
-      ConnReply reply = ConnReply.newBuilder().setConnId(1).setStatus("OK").build();
+      logger.info("Client connection request " + req.getHost());;
+      String code = OSEServer.getInstance().connectClient(req.getClientID(), req.getHost(), req.getPort(), req.getUsername(), req.getPassword());
+      ConnReply reply;  
+      if (code == null) {
+        reply = ConnReply.newBuilder().setConnId(code).setStatus("Disconnected").build();
+      } else {
+        reply = ConnReply.newBuilder().setConnId(code).setStatus("Connected").build();
+      }
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }

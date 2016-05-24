@@ -1,63 +1,63 @@
 package ucb.oseproxy.server;
 
-import io.netty.bootstrap.ServerBootstrap;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.logging.Logger;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import ucb.oseproxy.rpc.ProxyServer;
+import ucb.oseproxy.util.ProxyUtil;
 
-/**
- * Discards any incoming data.
- */
 public class OSEServer {
+  static final String JDBC_DRIVER = "org.postgresql.Driver";
+  static final String DB_URL = "jdbc:postgresql://%s:%d/EMP";
+  private static OSEServer instance = null;
+  private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
+  private HashMap<String, Connection> connMap;
 
-    private int port;
+  public static OSEServer getInstance() {
+    if (instance == null)
+      instance = new OSEServer();
+    return instance;
+  }
 
-    public OSEServer(int port) {
-        this.port = port;
+  protected OSEServer() {
+    connMap = new HashMap<String,Connection>();
+    // STEP 2: Register JDBC driver
+    try {
+      Class.forName(JDBC_DRIVER);
+    } catch (ClassNotFoundException e) {
+      logger.warning("JDBC Driver initialization failed");
     }
 
-    public void run() throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        try {
-            ServerBootstrap b = new ServerBootstrap(); // (2)
-            b.group(bossGroup, workerGroup)
-             .channel(NioServerSocketChannel.class) // (3)
-             .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
-                 @Override
-                 public void initChannel(SocketChannel ch) throws Exception {
-                     ch.pipeline().addLast(new OSEServerHandler());
-                 }
-             })
-             .option(ChannelOption.SO_BACKLOG, 128)          // (5)
-             .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+  }
 
-            // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(port).sync(); // (7)
-
-            // Wait until the server socket is closed.
-            // In this example, this does not happen, but you can do that to gracefully
-            // shut down your server.
-            f.channel().closeFuture().sync();
-        } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
-        }
+  public String connectClient(String clientID, String host, int port, String username, String password) {
+    String db_url = String.format(DB_URL, host, port);
+    // Always get a fresh connection until we can figure out how to get client info
+    /*
+    if (connMap.get(clientId + db_url) != null) {
+      return db_url.hashCode();
+    } else {
+    */
+    try {
+      // STEP 3: Open a connection
+      logger.info("Connecting to database" + host + ":" + port);
+      Connection conn = DriverManager.getConnection(DB_URL, username, password);
+      String uuid = ProxyUtil.randomId();
+      connMap.put(uuid, conn);
+      return uuid;
+    } catch (SQLException se) {
+      logger.warning("SQL exception" + se.getMessage());
+      return null;
     }
+  }
 
-    public static void main(String[] args) throws Exception {
-        int port;
-        if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-        } else {
-            port = 8080;
-        }
-        new OSEServer(port).run();
-    }
+  public Connection getConnection(int hash) {
+    if (connMap != null) {
+      return connMap.get(new Integer(hash));
+    } else
+      return null;
+  }
+
 }
 
