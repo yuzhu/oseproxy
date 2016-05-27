@@ -121,8 +121,14 @@ public class OSEResultSet implements ResultSet {
   }
 
   public String getString(int columnIndex) throws SQLException {
-    // TODO Auto-generated method stub
-    return null;
+    if (columnIndex > currRow.length) throw new SQLException("column index not valid");
+    Object obj = this.currRow[columnIndex-1];
+    if (obj == null) 
+      return null;
+    if (obj instanceof String) 
+      return ((String) obj);
+    else
+      return null; 
   }
 
   public boolean getBoolean(int columnIndex) throws SQLException {
@@ -141,8 +147,14 @@ public class OSEResultSet implements ResultSet {
   }
 
   public int getInt(int columnIndex) throws SQLException {
-    // TODO Auto-generated method stub
-    return 0;
+    if (columnIndex > currRow.length) throw new SQLException("column index not valid");
+    Object obj = this.currRow[columnIndex-1];
+    if (obj == null) 
+      return 0;
+    if (obj instanceof Integer) 
+      return ((Integer) obj).intValue();
+    else
+      return 0; 
   }
 
   public long getLong(int columnIndex) throws SQLException {
@@ -156,8 +168,14 @@ public class OSEResultSet implements ResultSet {
   }
 
   public double getDouble(int columnIndex) throws SQLException {
-    // TODO Auto-generated method stub
-    return 0;
+    if (columnIndex > currRow.length) throw new SQLException("column index not valid");
+    Object obj = this.currRow[columnIndex-1];
+    if (obj == null) 
+      return 0;
+    if (obj instanceof Double) 
+      return ((Double) obj).doubleValue();
+    else
+      return 0; 
   }
 
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
@@ -201,8 +219,18 @@ public class OSEResultSet implements ResultSet {
   }
 
   public String getString(String columnLabel) throws SQLException {
-    // TODO Auto-generated method stub
-    return null;
+    Object obj = this.rowMap.get(columnLabel);
+    if (obj == null) {
+      if (!rowMap.containsKey(columnLabel))
+        throw new SQLException ("column label not valid");
+      else
+        return null;
+    }
+      
+    if (obj instanceof String) 
+      return ((String) obj);
+    else
+      return null; 
   }
 
   public boolean getBoolean(String columnLabel) throws SQLException {
@@ -221,8 +249,18 @@ public class OSEResultSet implements ResultSet {
   }
 
   public int getInt(String columnLabel) throws SQLException {
-    // TODO Auto-generated method stub
-    return 0;
+    Object obj = this.rowMap.get(columnLabel);
+    if (obj == null) {
+      if (!rowMap.containsKey(columnLabel))
+        throw new SQLException ("column label not valid");
+      else
+        return 0;
+    }
+      
+    if (obj instanceof Integer) 
+      return ((Integer) obj).intValue();
+    else
+      return 0; 
   }
 
   public long getLong(String columnLabel) throws SQLException {
@@ -236,9 +274,19 @@ public class OSEResultSet implements ResultSet {
   }
 
   public double getDouble(String columnLabel) throws SQLException {
-    // TODO Auto-generated method stub
-    return 0;
-  }
+    Object obj = this.rowMap.get(columnLabel);
+    if (obj == null) {
+      if (!rowMap.containsKey(columnLabel))
+        throw new SQLException ("column label not valid");
+      else
+        return 0;
+    }
+      
+    if (obj instanceof Double) 
+      return ((Double) obj).doubleValue();
+    else
+      return 0; 
+   }
 
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
     // TODO Auto-generated method stub
