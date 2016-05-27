@@ -1,4 +1,6 @@
 syntax = "proto3";
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
 
 option java_multiple_files = true;
 option java_package = "ucb.oseproxy.rpc";
@@ -12,14 +14,17 @@ service OSEProxy {
   // get a DB connection
   rpc getConn (ConnRequest) returns (ConnReply) {}
   rpc execQuery (QueryRequest) returns (QueryReply) {}
+  rpc resultSetLoad (RSRequest) returns (RSReply) {}
+  rpc readRow(RowRequest) returns (RowReply) {}
 }
 
 // The request message containing the user's name.
 message ConnRequest {
   string host = 1;
   int32 port = 2;
-  string username = 3;
-  string password = 4;
+  string dbname = 3;
+  string username = 4;
+  string password = 5;
   string clientID = 100;
 }
 
@@ -30,10 +35,28 @@ message ConnReply {
 }
 
 message QueryRequest {
-  string sqlquery = 1;
-  string clientID = 100;
+  string connId = 1;
+  string query = 2;
 }
 
 message QueryReply {
   string resultSetId = 1;
+  google.protobuf.DescriptorProto schema = 2;
+}
+
+message RSRequest {
+	string resultSetId = 1;
+	int32 numRows = 2;
+}
+
+message RSReply {
+	repeated google.protobuf.Any row = 1;
+}
+
+message RowRequest {
+	string resultSetId = 1;
+}
+message RowReply {
+	bool valid = 1;
+	google.protobuf.Any  row = 2;
 }

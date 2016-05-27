@@ -1,14 +1,26 @@
 package ucb.oseproxy.rpc;
 
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.management.Descriptor;
+
+import com.google.protobuf.Any;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.Message;
+
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.ServerCall;
 import io.grpc.stub.StreamObserver;
 import ucb.oseproxy.server.OSEServer;
-
-
-import java.io.IOException;
-import java.util.logging.Logger;
+import ucb.oseproxy.util.DynamicSchema;
+import ucb.oseproxy.util.ProtobufEnvelope;
 
 
 public class ProxyServer {
@@ -20,10 +32,7 @@ public class ProxyServer {
   private Server server;
 
   private void start() throws IOException {
-    server = ServerBuilder.forPort(port)
-        .addService(new OSEProxyImpl())
-        .build()
-        .start();
+    server = ServerBuilder.forPort(port).addService(new OSEProxyImpl()).build().start();
     logger.info("Server started, listening on " + port);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -41,7 +50,7 @@ public class ProxyServer {
       server.shutdown();
     }
   }
-  
+
   /**
    * Await termination on the main thread since the grpc library uses daemon threads.
    */
@@ -51,7 +60,7 @@ public class ProxyServer {
     }
   }
 
-  
+
   /**
    * Main launches the server from the command line.
    */
@@ -62,12 +71,19 @@ public class ProxyServer {
   }
 
   private class OSEProxyImpl extends OSEProxyGrpc.AbstractOSEProxy {
+    Map<String, DynamicSchema> rsProtoMap;
+
+    public OSEProxyImpl() {
+      super();
+      rsProtoMap = new HashMap<String, DynamicSchema>();
+    }
 
     @Override
     public void getConn(ConnRequest req, StreamObserver<ConnReply> responseObserver) {
-      logger.info("Client connection request " + req.getHost());;
-      String code = OSEServer.getInstance().connectClient(req.getClientID(), req.getHost(), req.getPort(), req.getUsername(), req.getPassword());
-      ConnReply reply;  
+      logger.info("Client connection request " + req.getHost());
+      String code = OSEServer.getInstance().connectClient(req.getClientID(), req.getHost(),
+          req.getPort(), req.getDbname(), req.getUsername(), req.getPassword());
+      ConnReply reply;
       if (code == null) {
         reply = ConnReply.newBuilder().setConnId(code).setStatus("Disconnected").build();
       } else {
@@ -76,6 +92,101 @@ public class ProxyServer {
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }
+
+    private DynamicSchema extractSchema(String resultSetId, ResultSetMetaData rsmd) throws java.sql.SQLException {
+      DynamicSchema ds = new DynamicSchema();
+      for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+        int tp = rsmd.getColumnType(i);
+        switch (tp) {
+          case java.sql.Types.INTEGER:
+            ds.addField(rsmd.getColumnName(i),
+                DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32);
+            break;
+          case java.sql.Types.VARCHAR:
+            ds.addField(rsmd.getColumnName(i),
+                DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING);
+            break;
+          case java.sql.Types.BOOLEAN:
+            ds.addField(rsmd.getColumnName(i),
+                DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL);
+            break;
+          case java.sql.Types.DOUBLE:
+            ds.addField(rsmd.getColumnName(i),
+                DescriptorProtos.FieldDescriptorProto.Type.TYPE_DOUBLE);
+            break;
+          default:
+            logger.warning("Data type not currently supported");
+            break;
+        }
+      }
+      ds.setName(resultSetId);
+      this.rsProtoMap.put(resultSetId, ds);
+      return ds;
+    }
+
+    private DynamicSchema getSchema(String resultSetId) {
+      return this.rsProtoMap.get(resultSetId);
+    }
+
+    @Override
+    public void execQuery(QueryRequest req, StreamObserver<QueryReply> responseObserver) {
+      logger.info("Executing query on behalf of " + req.getConnId() + "  " + req.getQuery());
+      String resultset = OSEServer.getInstance().execQuery(req.getConnId(), req.getQuery());
+      ResultSet rs = OSEServer.getInstance().getResultSet(resultset);
+      QueryReply reply = null;
+      if (rs == null) {
+        reply = QueryReply.newBuilder().setResultSetId(null).build();
+        responseObserver.onNext(reply);
+        responseObserver.onCompleted();
+        return;
+      }
+      
+      DynamicSchema ds = null;
+      try {
+        ResultSetMetaData rsmd = rs.getMetaData();
+        ds = this.extractSchema(resultset, rsmd);
+      } catch (java.sql.SQLException e) {
+        logger.warning("Failed to extract schema for resultset " + resultset);
+      }
+      if (ds != null) {
+        reply = QueryReply.newBuilder().setSchema(ds.getDescProto()).setResultSetId(resultset).build();
+      } else {
+        reply = QueryReply.newBuilder().setResultSetId(null).build();
+      }
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+
+    }
+    // In QueryReply, we include the metadata for the resultset as well
+
+    @Override
+    public void readRow(RowRequest req, StreamObserver<RowReply> responseObserver) { 
+      logger.info("read row called");
+      Map<String, Object> row = OSEServer.getInstance().getNextRow(req.getResultSetId());
+      RowReply reply = null;
+      if (row == null) {
+        reply = RowReply.newBuilder().setValid(false).build();
+        responseObserver.onNext(reply);
+        responseObserver.onCompleted();
+        return;
+      }
+        
+      DynamicSchema ds = this.getSchema(req.getResultSetId());
+      Descriptors.Descriptor desc = ds.getDescriptor();
+      
+      DynamicMessage.Builder dmBuilder = DynamicMessage.newBuilder(desc);
+      for (String name : row.keySet()) {
+        dmBuilder.setField(desc.findFieldByName(name), row.get(name));
+      }
+      
+      DynamicMessage dm = dmBuilder.build();
+      Any any = Any.pack(dm);
+      
+      reply = RowReply.newBuilder().setValid(true).setRow(any).build();
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+      
+    }
   }
-  
 }
+

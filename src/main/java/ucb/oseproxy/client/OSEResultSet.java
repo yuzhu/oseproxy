@@ -20,9 +20,81 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.google.protobuf.Any;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
+
+import io.grpc.StatusRuntimeException;
+import ucb.oseproxy.rpc.OSEProxyGrpc;
+import ucb.oseproxy.rpc.ProxyClient;
+import ucb.oseproxy.rpc.RowReply;
+import ucb.oseproxy.rpc.RowRequest;
+import ucb.oseproxy.util.DynamicSchema;
+import ucb.oseproxy.util.ProtobufEnvelope;
 
 public class OSEResultSet implements ResultSet {
+  private static final Logger logger = Logger.getLogger(ProxyClient.class.getName());
+  private OSEProxyGrpc.OSEProxyBlockingStub blockingStub;
+  private String id;
+  private Descriptors.Descriptor desc;
+  
+  private Object[] currRow;
+  private Map<String, Object> rowMap;
+  
+  public OSEResultSet(OSEProxyGrpc.OSEProxyBlockingStub blockingStub, String resultSetId, DescriptorProtos.DescriptorProto descp){
+    this.blockingStub = blockingStub;
+    this.id = resultSetId;
+    this.desc  = DynamicSchema.getDesc(descp);
+    rowMap = new HashMap<String, Object>();
+  }
+  
+  public boolean loadNextRow() {
+    logger.info("Reading a row from the resultSet");
+    RowRequest request = RowRequest.newBuilder().setResultSetId(id).build();
+    RowReply response;
+    rowMap.clear();
+    try {
+      response = blockingStub.readRow(request);
+    } catch (StatusRuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+      return false;
+    }
+    Any any = response.getRow();
+    if (any == null || (response.getValid() == false)) {
+      currRow = null;
+      return false;
+    }
+    DynamicMessage dm =  null;
+    // Descriptors.Descriptor type = response.get
+    try {
+      dm = DynamicMessage.parseFrom(desc, any.getValue());
+    } catch (InvalidProtocolBufferException  e) {
+      logger.warning("Descriptor not valid"); 
+    }
+    
+    if (dm == null){
+      logger.warning("Loading row failed");
+      currRow = null;
+      return false;
+    }
+    int i = 0;
+    currRow = new Object[desc.getFields().size()];
+    for (FieldDescriptor fd :desc.getFields()) {
+      currRow[i] = dm.getField(fd);
+      rowMap.put(fd.getName(), currRow[i] );
+      i++;
+    }
+    
+    return true;
+  }
 
   public <T> T unwrap(Class<T> iface) throws SQLException {
     // TODO Auto-generated method stub
@@ -35,8 +107,7 @@ public class OSEResultSet implements ResultSet {
   }
 
   public boolean next() throws SQLException {
-    // TODO Auto-generated method stub
-    return false;
+    return this.loadNextRow();
   }
 
   public void close() throws SQLException {

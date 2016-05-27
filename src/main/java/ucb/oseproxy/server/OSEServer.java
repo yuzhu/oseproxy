@@ -2,6 +2,7 @@ package ucb.oseproxy.server;
 
 import java.sql.*;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.rpc.ProxyServer;
@@ -9,10 +10,11 @@ import ucb.oseproxy.util.ProxyUtil;
 
 public class OSEServer {
   static final String JDBC_DRIVER = "org.postgresql.Driver";
-  static final String DB_URL = "jdbc:postgresql://%s:%d/EMP";
+  static final String DB_URL = "jdbc:postgresql://%s:%d/%s";
   private static OSEServer instance = null;
   private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
   private HashMap<String, Connection> connMap;
+  private HashMap<String, ResultSet> rsMap;
 
   public static OSEServer getInstance() {
     if (instance == null)
@@ -21,7 +23,8 @@ public class OSEServer {
   }
 
   protected OSEServer() {
-    connMap = new HashMap<String,Connection>();
+    connMap = new HashMap<String, Connection>();
+    rsMap = new HashMap<String, ResultSet>();
     // STEP 2: Register JDBC driver
     try {
       Class.forName(JDBC_DRIVER);
@@ -31,18 +34,17 @@ public class OSEServer {
 
   }
 
-  public String connectClient(String clientID, String host, int port, String username, String password) {
-    String db_url = String.format(DB_URL, host, port);
+  public String connectClient(String clientID, String host, int port, String dbname, String username,
+      String password) {
+    String db_url = String.format(DB_URL, host, port, dbname);
     // Always get a fresh connection until we can figure out how to get client info
     /*
-    if (connMap.get(clientId + db_url) != null) {
-      return db_url.hashCode();
-    } else {
-    */
+     * if (connMap.get(clientId + db_url) != null) { return db_url.hashCode(); } else {
+     */
     try {
       // STEP 3: Open a connection
-      logger.info("Connecting to database" + host + ":" + port);
-      Connection conn = DriverManager.getConnection(DB_URL, username, password);
+      logger.info("Connecting to database"  + db_url);
+      Connection conn = DriverManager.getConnection(db_url, username, password);
       String uuid = ProxyUtil.randomId();
       connMap.put(uuid, conn);
       return uuid;
@@ -52,12 +54,59 @@ public class OSEServer {
     }
   }
 
-  public Connection getConnection(int hash) {
+  public String execQuery(String connId, String query) {
+    Connection conn = this.getConnection(connId);
+    if (conn == null) {
+      return null;
+    }
+    Statement stmt;
+    ResultSet rs = null;
+    try {
+      stmt = conn.createStatement();
+      rs = stmt.executeQuery(query);
+    } catch (SQLException e) {
+      logger.warning("SQL exception for connId" + connId + ": " + e.toString());
+      return null;
+    }  
+    if (rs != null) {
+      String uuid = ProxyUtil.randomId();
+      rsMap.put(uuid, rs);
+      return uuid;
+    }
+
+    return null;
+  }
+
+  public ResultSet getResultSet(String rsId) {
+    if (rsId != null)
+      return rsMap.get(rsId);
+    else return null;
+  }
+
+  public Connection getConnection(String connId) {
     if (connMap != null) {
-      return connMap.get(new Integer(hash));
+      return connMap.get(connId);
     } else
       return null;
   }
+
+  public Map<String, Object> getNextRow(String resultSetId) {
+    ResultSet rs = this.getResultSet(resultSetId);
+    Map<String, Object> row = new HashMap<String, Object>();
+    try {
+      if (!rs.next()) return null;
+      for (int i=0; i<rs.getMetaData().getColumnCount(); i++) {
+        row.put(rs.getMetaData().getColumnName(i+1), rs.getObject(i+1));
+      }
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return null;
+    }
+    return row;
+
+  }
+
 
 }
 
