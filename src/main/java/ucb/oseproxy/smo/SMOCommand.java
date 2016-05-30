@@ -149,6 +149,23 @@ public class SMOCommand {
 
   }
   
+  
+  private String setupTriggerFuncforView(String tablename, String operation, String funcBody) throws SQLException{
+    Statement stmt = conn.createStatement();
+    StringBuilder triggerString = new StringBuilder();
+    String triggerFunc = tablename + "_" + operation + "_func";
+    triggerString.append("CREATE OR REPLACE FUNCTION "+ triggerFunc );
+    triggerString.append("() RETURNS trigger AS $" + triggerFunc + "$");
+    triggerString.append(" BEGIN ");
+    triggerString.append(funcBody);
+    triggerString.append(" RETURN NEW; ");
+    triggerString.append("END; ");
+    triggerString.append("$" + triggerFunc + "$ LANGUAGE plpgsql;");
+    logger.info(triggerString.toString());
+    stmt.executeUpdate(triggerString.toString());
+    return triggerFunc;
+  }
+  
 
   public void createView() throws SQLException {
     switch (cmd) {
@@ -163,23 +180,35 @@ public class SMOCommand {
         String collista = args.get(1);
         String collistb = args.get(2);
         String collistc = args.get(3);
-        setupHistoryTable(conn, table);
-        String insertTrigger = setupTriggerFunction(table, "INSERT");
-        String updateTrigger = setupTriggerFunction(table, "UPDATE");
-        String deleteTrigger = setupTriggerFunction(table, "DELETE");
+//        setupHistoryTable(conn, table);
+//        String insertTrigger = setupTriggerFunction(table, "INSERT");
+//        String updateTrigger = setupTriggerFunction(table, "UPDATE");
+//        String deleteTrigger = setupTriggerFunction(table, "DELETE");
         
         conn.setAutoCommit(false);
         Statement stmt = conn.createStatement();
-        attachTrigger(stmt, table, insertTrigger, "INSERT") ;
-        attachTrigger(stmt, table, updateTrigger, "UPDATE");
-        attachTrigger(stmt, table, deleteTrigger, "DELETE");
+//        attachTrigger(stmt, table, insertTrigger, "INSERT") ;
+//        attachTrigger(stmt, table, updateTrigger, "UPDATE");
+//        attachTrigger(stmt, table, deleteTrigger, "DELETE");
         
-        String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s" ;
+        String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s;" ;
         String view1 = String.format(viewString, getViewName(table,1), collista, collistb , table);
         String view2 = String.format(viewString, getViewName(table,2), collista, collistc , table);
-        String dropViews = "DROP MATERIALIZED VIEW IF EXISTS %s";
+        String dropViews = "DROP MATERIALIZED VIEW IF EXISTS %s;";
         String dropView1 = String.format(dropViews, getViewName(table,1));
         String dropView2 = String.format(dropViews, getViewName(table,2));
+        
+        String insertFunc = this.setupTriggerFuncforView(table, "INSERT", genfuncBody("INSERT", table, getViewName(table,1), collista + "," + collistb) 
+            + genfuncBody("INSERT", table, getViewName(table,2), collista + "," + collistc));
+        String deleteFunc = this.setupTriggerFuncforView(table, "DELETE", genfuncBody("DELETE", table, getViewName(table,1), collista + "," + collistb) 
+            + genfuncBody("DELETE", table, getViewName(table,2), collista + "," + collistc));
+        String updateFunc = this.setupTriggerFuncforView(table, "UPDATE", genfuncBody("UPDATE", table, getViewName(table,1), collista + "," + collistb) 
+            + genfuncBody("UPDATE", table, getViewName(table,2), collista + "," + collistc));
+        
+        attachTrigger(stmt, table, insertFunc, "INSERT") ;
+        attachTrigger(stmt, table, updateFunc, "UPDATE");
+        attachTrigger(stmt, table, deleteFunc, "DELETE");
+        
         
         stmt.addBatch(dropView1);
         stmt.addBatch(dropView2);
@@ -194,5 +223,75 @@ public class SMOCommand {
         conn.setAutoCommit(true);
     }
     
+  }
+  // useful for when view is a projection of the table, list the subcolumns in the collist
+  private String genfuncBody(String operation, String table, String view, String collist) {
+    List<String> cols = Arrays.asList(collist.split(","));
+    StringBuilder sb = new StringBuilder();
+    switch (operation) {
+      case "INSERT":
+         sb.append("INSERT INTO ");
+         sb.append(view);
+         sb.append(" VALUES (");
+         for (String col : cols) {
+           sb.append("NEW.");
+           sb.append(col);
+           if (cols.get(cols.size()-1) != col) { // col is last
+             sb.append(",");
+           }
+         }
+         sb.append(");");
+        break;
+      case "DELETE":
+        sb.append("DELETE FROM ");
+        sb.append(view);
+        sb.append(" WHERE ");
+        for (String col : cols) {
+          
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          if (cols.get(cols.size()-1) != col) { // col is last
+            sb.append(" AND ");
+          }
+        }
+        sb.append(";");
+       break;
+      case "UPDATE":
+        sb.append("DELETE FROM ");
+        sb.append(view);
+        sb.append(" WHERE ");
+        for (String col : cols) {
+          
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          if (cols.get(cols.size()-1) != col) { // col is last
+            sb.append(" AND ");
+          }
+        }
+        sb.append(";");
+        
+        sb.append("INSERT INTO ");
+        sb.append(view);
+        sb.append(" VALUES (");
+        for (String col : cols) {
+          sb.append("NEW.");
+          sb.append(col);
+          if (cols.get(cols.size()-1) != col) { // col is last
+            sb.append(",");
+          }
+        }
+        sb.append(");");
+        
+        
+        break;
+     default:
+       logger.warning("Operation not supported:  " + operation);
+       return null;
+    }
+    return sb.toString();
   }
 }

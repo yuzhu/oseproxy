@@ -134,8 +134,8 @@ public class ProxyClient {
       schanger.start();
       
  
-      for (int i=1000001; i <=10000000; i++) {
-        int ret = client.execUpdate(connId, "insert into semilargeppl values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
+      for (int i=10000001; i <=100000000; i++) {
+        int ret = client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
 
       }
     } catch (SQLException e) {
