@@ -77,12 +77,13 @@ public class SMOCommand {
     Statement stmt = conn.createStatement();
 
     StringBuilder triggerString  = new StringBuilder("");
-    triggerString.append("CREATE OR REPLACE FUNCTION "+ tablename +"_" + operation + "_func() ");
-    triggerString.append("RETURNS trigger AS $" + tablename + "_" + operation + "_func$");
+    String triggerFunc = tablename + "_" + operation + "_func";
+    triggerString.append("CREATE OR REPLACE FUNCTION "+ triggerFunc );
+    triggerString.append(" RETURNS trigger AS $" + triggerFunc + "$");
     triggerString.append(" BEGIN ");
     ResultSet rs = stmt.executeQuery("select * from " + tablename + " where 0=1");
     ResultSetMetaData rsmd = rs.getMetaData();
-    String triggerFunc = tablename + "_" + operation + "_func";
+    
     
     switch (operation) {
       case "INSERT":
@@ -147,6 +148,8 @@ public class SMOCommand {
     stmt.addBatch(sb.toString());
 
   }
+  
+
   public void createView() throws SQLException {
     switch (cmd) {
       case DECOMPOSE_TABLE: 
