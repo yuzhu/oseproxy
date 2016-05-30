@@ -2,10 +2,13 @@ package ucb.oseproxy.server;
 
 import java.sql.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.rpc.ProxyServer;
+import ucb.oseproxy.smo.SMOCommand;
+import ucb.oseproxy.smo.SMOCommand.Command;
 import ucb.oseproxy.util.ProxyUtil;
 
 public class OSEServer {
@@ -15,6 +18,8 @@ public class OSEServer {
   private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
   private HashMap<String, Connection> connMap;
   private HashMap<String, ResultSet> rsMap;
+  // map a db to a SMO
+  private HashMap<String, SMOCommand> smoMap; 
 
   public static OSEServer getInstance() {
     if (instance == null)
@@ -25,6 +30,7 @@ public class OSEServer {
   protected OSEServer() {
     connMap = new HashMap<String, Connection>();
     rsMap = new HashMap<String, ResultSet>();
+    smoMap = new HashMap<String, SMOCommand>();
     // STEP 2: Register JDBC driver
     try {
       Class.forName(JDBC_DRIVER);
@@ -54,6 +60,23 @@ public class OSEServer {
     }
   }
 
+  public int execUpdate(String connId, String query) {
+    Connection conn = this.getConnection(connId);
+    if (conn == null) {
+      return 0;
+    }
+    Statement stmt;
+    int retval;
+    try {
+      stmt = conn.createStatement();
+      retval = stmt.executeUpdate(query);
+    } catch (SQLException e) {
+      logger.warning("SQL exception for connId" + connId + ": " + e.toString());
+      return 0;
+    }  
+    return retval;
+  }
+  
   public String execQuery(String connId, String query) {
     Connection conn = this.getConnection(connId);
     if (conn == null) {
@@ -75,6 +98,23 @@ public class OSEServer {
     }
 
     return null;
+  }
+  
+  public void execSMO(String connId, Command cmd, List<String> options ) {
+    // find the db the conn belong to
+    Connection conn = this.getConnection(connId);
+    try {
+      String dbURL = conn.getMetaData().getURL();
+      logger.info("execSMO dbURL" + dbURL);
+      SMOCommand smo = new SMOCommand(conn, cmd, options);
+      smoMap.put(dbURL, smo);
+      smo.createView();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    // find out if there are any outstanding SMOs
+    
   }
 
   public ResultSet getResultSet(String rsId) {

@@ -19,6 +19,7 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import ucb.oseproxy.server.OSEServer;
+import ucb.oseproxy.smo.SMOCommand.Command;
 import ucb.oseproxy.util.DynamicSchema;
 import ucb.oseproxy.util.ProtobufEnvelope;
 
@@ -93,7 +94,8 @@ public class ProxyServer {
       responseObserver.onCompleted();
     }
 
-    private DynamicSchema extractSchema(String resultSetId, ResultSetMetaData rsmd) throws java.sql.SQLException {
+    private DynamicSchema extractSchema(String resultSetId, ResultSetMetaData rsmd)
+        throws java.sql.SQLException {
       DynamicSchema ds = new DynamicSchema();
       for (int i = 1; i <= rsmd.getColumnCount(); i++) {
         int tp = rsmd.getColumnType(i);
@@ -140,7 +142,7 @@ public class ProxyServer {
         responseObserver.onCompleted();
         return;
       }
-      
+
       DynamicSchema ds = null;
       try {
         ResultSetMetaData rsmd = rs.getMetaData();
@@ -149,7 +151,8 @@ public class ProxyServer {
         logger.warning("Failed to extract schema for resultset " + resultset);
       }
       if (ds != null) {
-        reply = QueryReply.newBuilder().setSchema(ds.getDescProto()).setResultSetId(resultset).build();
+        reply =
+            QueryReply.newBuilder().setSchema(ds.getDescProto()).setResultSetId(resultset).build();
       } else {
         reply = QueryReply.newBuilder().setResultSetId(null).build();
       }
@@ -157,10 +160,23 @@ public class ProxyServer {
       responseObserver.onCompleted();
 
     }
+    
+    @Override
+    public void execUpdate(UpdateRequest req, StreamObserver<UpdateReply> responseObserver) {
+      // logger.info("Executing update on behalf of " + req.getConnId() + "  " + req.getQuery());
+      int returnVal = OSEServer.getInstance().execUpdate(req.getConnId(), req.getQuery());
+      UpdateReply reply = null;
+      reply = UpdateReply.newBuilder().setRowCount(returnVal).build();
+      
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+
+    }
+    
     // In QueryReply, we include the metadata for the resultset as well
 
     @Override
-    public void readRow(RowRequest req, StreamObserver<RowReply> responseObserver) { 
+    public void readRow(RowRequest req, StreamObserver<RowReply> responseObserver) {
       logger.info("read row called");
       Map<String, Object> row = OSEServer.getInstance().getNextRow(req.getResultSetId());
       RowReply reply = null;
@@ -170,23 +186,36 @@ public class ProxyServer {
         responseObserver.onCompleted();
         return;
       }
-        
+
       DynamicSchema ds = this.getSchema(req.getResultSetId());
       Descriptors.Descriptor desc = ds.getDescriptor();
-      
+
       DynamicMessage.Builder dmBuilder = DynamicMessage.newBuilder(desc);
       for (String name : row.keySet()) {
         dmBuilder.setField(desc.findFieldByName(name), row.get(name));
       }
-      
+
       DynamicMessage dm = dmBuilder.build();
       Any any = Any.pack(dm);
-      
+
       reply = RowReply.newBuilder().setValid(true).setRow(any).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
-      
+
     }
+    
+    @Override
+    public void execSMO(SMORequest req, StreamObserver<SMOReply> responseObserver) {
+      logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getCmd());
+      SMOReply reply = null;
+      OSEServer.getInstance().execSMO(req.getConnId(), Command.values()[req.getCmd()], req.getArgList());
+      
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+
+    }
+    
+    
   }
 }
 

@@ -16,6 +16,8 @@ service OSEProxy {
   rpc execQuery (QueryRequest) returns (QueryReply) {}
   rpc resultSetLoad (RSRequest) returns (RSReply) {}
   rpc readRow(RowRequest) returns (RowReply) {}
+  rpc execSMO(SMORequest) returns (SMOReply) {}
+  rpc execUpdate(UpdateRequest) returns (UpdateReply) {}
 }
 
 // The request message containing the user's name.
@@ -44,6 +46,15 @@ message QueryReply {
   google.protobuf.DescriptorProto schema = 2;
 }
 
+message UpdateRequest {
+  string connId = 1;
+  string query = 2;
+}
+
+message UpdateReply {
+  int32 rowCount = 1;
+}
+
 message RSRequest {
 	string resultSetId = 1;
 	int32 numRows = 2;
@@ -59,4 +70,14 @@ message RowRequest {
 message RowReply {
 	bool valid = 1;
 	google.protobuf.Any  row = 2;
+}
+
+message SMORequest {
+	string connId = 1;
+	int32 cmd = 2;
+	repeated string arg = 3;
+}
+
+message SMOReply {
+	int32 status = 1;
 }
