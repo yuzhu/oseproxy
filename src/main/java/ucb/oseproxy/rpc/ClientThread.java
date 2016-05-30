@@ -1,8 +1,8 @@
 package ucb.oseproxy.rpc;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.logging.Logger;
+
+import ucb.oseproxy.smo.SMOCommand.Command;
 
 public class ClientThread extends Thread {
   private String dbURL;
@@ -29,16 +29,11 @@ public class ClientThread extends Thread {
       try {
         String connId = client.connect(dbURL, dbPort, dbname, username, password);
         logger.info("Thread " + name + " Connection id " + connId);
-        ResultSet rs = client.execQuery(connId, "select * from persons");
-        while (rs.next()) {
-        }
-        /*
-        String opt[] = {"persons", "personid", "lastname, firstname", "address,city"};
+         
+        String opt[] = {"semilargeppl", "personid", "lastname, firstname", "address,city"};
         // Issue SMO
         client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
-        */
-      } catch (SQLException e) {
-        logger.warning(e.getMessage());
+         
       } finally {
         client.shutdown();
       }

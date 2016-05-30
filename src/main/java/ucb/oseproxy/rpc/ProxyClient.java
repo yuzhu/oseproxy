@@ -130,16 +130,22 @@ public class ProxyClient {
       String connId = client.connect(dbURL, dbPort, dbname, username, password);
       logger.info("Connection id " + connId);
       ResultSet rs = client.execQuery(connId, "select * from persons");
-      // schanger.start();
-       rs.next() ;
-      for (int i=7098; i <=1000000; i++) {
-        int ret = client.execUpdate(connId, "insert into persons values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
+      rs.next();
+      schanger.start();
+      
+ 
+      for (int i=1000001; i <=10000000; i++) {
+        int ret = client.execUpdate(connId, "insert into semilargeppl values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
+
       }
     } catch (SQLException e) {
       logger.warning(e.getMessage());
     } finally {
       client.shutdown();
     }
+    
+    schanger.join();
+    logger.info("All threads finished");
   }
 
 

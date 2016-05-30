@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -46,10 +48,11 @@ public class SMOCommand {
   private boolean setupHistoryTable(Connection conn, String tablename) throws SQLException {
     // Create history table
     StringBuilder  histTable = new StringBuilder();
-    histTable.append("DROP TABLE ");
+    histTable.append("DROP TABLE IF EXISTS ");
     histTable.append("history_" + tablename);
     histTable.append(";");
     Statement stmt = conn.createStatement();
+    logger.info(histTable.toString());
     stmt.executeUpdate(histTable.toString());
     histTable = new StringBuilder();
     histTable.append("CREATE TABLE ");
@@ -62,6 +65,7 @@ public class SMOCommand {
       histTable.append(",new_" + rsmd.getColumnName(i) + " " + rsmd.getColumnTypeName(i));
     }
     histTable.append(");");
+    logger.info(histTable.toString());
     stmt.executeUpdate(histTable.toString());
     return true;
     
@@ -72,12 +76,10 @@ public class SMOCommand {
       return null;
     Statement stmt = conn.createStatement();
 
-    String dropTrigger = "DROP TRIGGER IF EXISTS 'histtrigger_for_%s'";
-    String dropTriggerString = String.format(dropTrigger, tablename);
     StringBuilder triggerString  = new StringBuilder("");
     triggerString.append("CREATE OR REPLACE FUNCTION "+ tablename +"_" + operation + "_func() ");
     triggerString.append("RETURNS trigger AS $" + tablename + "_" + operation + "_func$");
-    triggerString.append("BEGIN");
+    triggerString.append(" BEGIN ");
     ResultSet rs = stmt.executeQuery("select * from " + tablename + " where 0=1");
     ResultSetMetaData rsmd = rs.getMetaData();
     String triggerFunc = tablename + "_" + operation + "_func";
@@ -115,11 +117,13 @@ public class SMOCommand {
        logger.warning("Operation not supported:  " + operation);
        break;
     }
-    triggerString.append("RETURN NEW;");
-    triggerString.append("END;");
+    triggerString.append(" RETURN NEW; ");
+    triggerString.append("END; ");
     triggerString.append("$" + triggerFunc + "$ LANGUAGE plpgsql;");
     
+    logger.info(triggerString.toString());
     stmt.executeUpdate(triggerString.toString());
+    
     return triggerFunc;
   }
   
@@ -128,7 +132,7 @@ public class SMOCommand {
   }
   /* Connection in transaction mode */
   private void attachTrigger(Statement stmt, String tablename, String triggerFunc, String op) throws SQLException {
-    stmt.addBatch("DROP TRIGGER " + getTriggerName(tablename, triggerFunc));
+    stmt.addBatch("DROP TRIGGER IF EXISTS " + getTriggerName(tablename, triggerFunc) + " on " + tablename + ";");
     StringBuilder sb = new StringBuilder();
     sb.append("CREATE TRIGGER ");
     sb.append(getTriggerName(tablename, triggerFunc));
@@ -139,6 +143,7 @@ public class SMOCommand {
     sb.append(" FOR EACH ROW EXECUTE PROCEDURE ");
     sb.append(triggerFunc);
     sb.append("();");
+    logger.info(sb.toString());
     stmt.addBatch(sb.toString());
 
   }
@@ -169,7 +174,7 @@ public class SMOCommand {
         String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s" ;
         String view1 = String.format(viewString, getViewName(table,1), collista, collistb , table);
         String view2 = String.format(viewString, getViewName(table,2), collista, collistc , table);
-        String dropViews = "DROP VIEW %s";
+        String dropViews = "DROP MATERIALIZED VIEW IF EXISTS %s";
         String dropView1 = String.format(dropViews, getViewName(table,1));
         String dropView2 = String.format(dropViews, getViewName(table,2));
         
@@ -178,7 +183,11 @@ public class SMOCommand {
         stmt.addBatch(view1);
         stmt.addBatch(view2);
         stmt.executeBatch();
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        logger.info("commit time" +  sdf.format(cal.getTime()));
         conn.commit();
+        logger.info("after commit time" +  sdf.format(cal.getTime()));
         conn.setAutoCommit(true);
     }
     
