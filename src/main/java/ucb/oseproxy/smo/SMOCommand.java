@@ -7,6 +7,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -19,6 +20,8 @@ public class SMOCommand {
   private Command cmd;
   private List<String> args;
   private Connection conn;
+  private List<String> resultTables;
+  
   public static int MAX_ARGS = 3;
   private static final Logger logger = Logger.getLogger(ProxyClient.class.getName());
 
@@ -39,6 +42,7 @@ public class SMOCommand {
     this.conn = conn;
     this.cmd = cmd2;
     this.args = options;
+    resultTables = new ArrayList<String>();
   }
   
   private String getViewName(String tablename, int index) {
@@ -58,6 +62,7 @@ public class SMOCommand {
     histTable.append("CREATE TABLE ");
     histTable.append("history_" + tablename);
     histTable.append("(op_type int ");
+    // Get column names
     ResultSet rs = stmt.executeQuery("select * from " + tablename + " where 0=1");
     ResultSetMetaData rsmd = rs.getMetaData();
     for (int i = 1; i<= rsmd.getColumnCount(); i++){
@@ -197,6 +202,8 @@ public class SMOCommand {
         String dropViews = "DROP MATERIALIZED VIEW IF EXISTS %s;";
         String dropView1 = String.format(dropViews, getViewName(table,1));
         String dropView2 = String.format(dropViews, getViewName(table,2));
+        this.resultTables.add(getViewName(table,1));
+        this.resultTables.add(getViewName(table,2));
         
         String insertFunc = this.setupTriggerFuncforView(table, "INSERT", genfuncBody("INSERT", table, getViewName(table,1), collista + "," + collistb) 
             + genfuncBody("INSERT", table, getViewName(table,2), collista + "," + collistc));
@@ -215,12 +222,11 @@ public class SMOCommand {
         stmt.addBatch(view1);
         stmt.addBatch(view2);
         stmt.executeBatch();
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        logger.info("commit time" +  sdf.format(cal.getTime()));
         conn.commit();
-        logger.info("after commit time" +  sdf.format(cal.getTime()));
+        
         conn.setAutoCommit(true);
+      default:
+        return;
     }
     
   }

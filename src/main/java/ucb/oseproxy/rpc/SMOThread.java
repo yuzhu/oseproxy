@@ -4,23 +4,15 @@ import java.util.logging.Logger;
 
 import ucb.oseproxy.smo.SMOCommand.Command;
 
-public class ClientThread extends Thread {
-  protected String dbURL;
-  protected int dbPort;
-  protected String dbname;
-  protected String username;
-  protected String password;
-  
+public class SMOThread extends ClientThread {
+
+  public SMOThread(String s1, int i1, String s2, String s3, String s4) {
+    super(s1, i1, s2, s3, s4);
+    // TODO Auto-generated constructor stub
+  }
+
   private static final Logger logger = Logger.getLogger(ProxyClient.class.getName());
 
-  public ClientThread (String s1, int i1, String s2, String s3, String s4)  {
-    dbURL = s1;
-    dbPort = i1;
-    dbname = s2;
-    username = s3;
-    password = s4;
-    
-  }
   @Override
   public void run() {
     try {

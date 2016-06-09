@@ -43,16 +43,18 @@ public class OSEServer {
   public String connectClient(String clientID, String host, int port, String dbname, String username,
       String password) {
     String db_url = String.format(DB_URL, host, port, dbname);
-    // Always get a fresh connection until we can figure out how to get client info
-    /*
-     * if (connMap.get(clientId + db_url) != null) { return db_url.hashCode(); } else {
-     */
     try {
       // STEP 3: Open a connection
       logger.info("Connecting to database"  + db_url);
       Connection conn = DriverManager.getConnection(db_url, username, password);
       String uuid = ProxyUtil.randomId();
       connMap.put(uuid, conn);
+      // Perform initialization of the connection for SMOs
+      Statement stmt = conn.createStatement();
+      //stmt.executeUpdate("CREATE LANGUAGE plperl;");
+      stmt.executeUpdate("CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$ if ($_SHARED{$_[0]} = $_[1]) {return 'ok';} else { return \"can't set shared variable $_[0] to $_[1]\";}$$ LANGUAGE plperl;");
+      stmt.executeUpdate("CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$return $_SHARED{$_[0]};$$ LANGUAGE plperl;");
+      
       return uuid;
     } catch (SQLException se) {
       logger.warning("SQL exception" + se.getMessage());
@@ -110,7 +112,6 @@ public class OSEServer {
       smoMap.put(dbURL, smo);
       smo.createView();
     } catch (SQLException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     // find out if there are any outstanding SMOs
