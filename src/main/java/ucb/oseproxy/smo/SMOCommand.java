@@ -162,7 +162,9 @@ public class SMOCommand {
     triggerString.append("CREATE OR REPLACE FUNCTION "+ triggerFunc );
     triggerString.append("() RETURNS trigger AS $" + triggerFunc + "$");
     triggerString.append(" BEGIN ");
+    triggerString.append(" IF get_var('triggered') = 'no' THEN PERFORM set_var('triggered', 'yes');");
     triggerString.append(funcBody);
+    triggerString.append( "PERFORM set_var('triggered', 'no'); END IF;");
     triggerString.append(" RETURN NEW; ");
     triggerString.append("END; ");
     triggerString.append("$" + triggerFunc + "$ LANGUAGE plpgsql;");
@@ -170,6 +172,7 @@ public class SMOCommand {
     stmt.executeUpdate(triggerString.toString());
     return triggerFunc;
   }
+  
   
 
   public void createView() throws SQLException {
@@ -211,6 +214,7 @@ public class SMOCommand {
             + genfuncBody("DELETE", table, getViewName(table,2), collista + "," + collistc));
         String updateFunc = this.setupTriggerFuncforView(table, "UPDATE", genfuncBody("UPDATE", table, getViewName(table,1), collista + "," + collistb) 
             + genfuncBody("UPDATE", table, getViewName(table,2), collista + "," + collistc));
+
         
         attachTrigger(stmt, table, insertFunc, "INSERT") ;
         attachTrigger(stmt, table, updateFunc, "UPDATE");
