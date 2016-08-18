@@ -38,7 +38,6 @@ import ucb.oseproxy.rpc.ProxyClient;
 import ucb.oseproxy.rpc.RowReply;
 import ucb.oseproxy.rpc.RowRequest;
 import ucb.oseproxy.util.DynamicSchema;
-import ucb.oseproxy.util.ProtobufEnvelope;
 
 public class OSEResultSet implements ResultSet {
   private static final Logger logger = Logger.getLogger(ProxyClient.class.getName());

@@ -151,9 +151,15 @@ public class SMOCommand {
     sb.append("();");
     logger.info(sb.toString());
     stmt.addBatch(sb.toString());
-
   }
   
+  private void attachTriggers(Statement stmt, String tablename, String insertFunc, String updateFunc, String deleteFunc) 
+      throws SQLException {
+    attachTrigger(stmt, tablename, insertFunc, "INSERT");
+    attachTrigger(stmt, tablename, deleteFunc, "DELETE");
+    attachTrigger(stmt, tablename, updateFunc, "UPDATE");
+  }
+  /* This function sets up the trigger function for views with a funcBody attached */
   
   private String setupTriggerFuncforView(String tablename, String operation, String funcBody) throws SQLException{
     Statement stmt = conn.createStatement();
@@ -214,12 +220,32 @@ public class SMOCommand {
             + genfuncBody("DELETE", table, getViewName(table,2), collista + "," + collistc));
         String updateFunc = this.setupTriggerFuncforView(table, "UPDATE", genfuncBody("UPDATE", table, getViewName(table,1), collista + "," + collistb) 
             + genfuncBody("UPDATE", table, getViewName(table,2), collista + "," + collistc));
+        
 
+        attachTriggers(stmt, table, insertFunc, updateFunc, deleteFunc);
         
-        attachTrigger(stmt, table, insertFunc, "INSERT") ;
-        attachTrigger(stmt, table, updateFunc, "UPDATE");
-        attachTrigger(stmt, table, deleteFunc, "DELETE");
         
+        // reverse function for view1
+        String insertView1Func = this.setupTriggerFuncforView(getViewName(table,1), "INSERT", 
+                      genReverseFuncBody("INSERT", table, getViewName(table,1), collista, collistb, collistc));
+        String deleteView1Func = this.setupTriggerFuncforView(getViewName(table,1), "DELETE", 
+            genReverseFuncBody("DELETE", table, getViewName(table,1), collista, collistb, collistc));
+        String updateView1Func = this.setupTriggerFuncforView(getViewName(table,1), "UPDATE", 
+            genReverseFuncBody("UPDATE", table, getViewName(table,1), collista, collistb, collistc));
+        
+        attachTriggers(stmt, getViewName(table,1), insertView1Func, updateView1Func, deleteView1Func);
+        
+        
+        // reverse function for view2
+        String insertView2Func = this.setupTriggerFuncforView(getViewName(table,2), "INSERT", 
+                      genReverseFuncBody("INSERT", table, getViewName(table,2), collista, collistc, collistb));
+        String deleteView2Func = this.setupTriggerFuncforView(getViewName(table,2), "DELETE", 
+            genReverseFuncBody("DELETE", table, getViewName(table,2), collista, collistc, collistb));
+        String updateView2Func = this.setupTriggerFuncforView(getViewName(table,2), "UPDATE", 
+            genReverseFuncBody("UPDATE", table, getViewName(table,2), collista, collistc, collistb));
+        
+        
+        attachTriggers(stmt, getViewName(table,2), insertView2Func, updateView2Func, deleteView2Func);
         
         stmt.addBatch(dropView1);
         stmt.addBatch(dropView2);
@@ -233,6 +259,108 @@ public class SMOCommand {
         return;
     }
     
+  }
+  
+  private String genReverseFuncBody(String operation, String table, String view, 
+      String collistKey, String collistView, String collistOther) {
+    // key|view => key|view|other
+    List<String> keysCols = Arrays.asList(collistKey.split(","));
+    List<String> viewCols = Arrays.asList(collistView.split(","));
+    
+    List<String> keysview = new ArrayList<String> ();
+    keysview.addAll(keysCols);
+    keysview.addAll(viewCols);
+    List<String> otherCols = Arrays.asList(collistOther.split(","));
+    StringBuilder sb = new StringBuilder();
+    switch (operation) {
+      // TODO: consider refactoring into the following.
+      // sb.append(genInsert("NEW", collist, defaultlist, destname))
+      case "INSERT":
+         sb.append("INSERT INTO ");
+         sb.append(table);
+         sb.append(" VALUES (");
+         // Propagate data from the  insertion into view to the original table 
+         for (String col : keysCols) {
+           sb.append("NEW.");
+           sb.append(col);
+           sb.append(",");
+           
+         }
+         for (String col : viewCols) {
+           sb.append("NEW.");
+           sb.append(col);
+           sb.append(",");
+         }
+         
+         // Insert null value or default values for things that are not in the insertion.
+         for (String col : otherCols) {
+           sb.append("DEFAULT");
+           sb.append(",");
+         }
+         // delete the last character
+         sb.deleteCharAt(sb.length()-1);
+         sb.append(");");
+         break;
+      case "UPDATE":
+        sb.append("UPDATE ");
+        sb.append(table);
+        sb.append(" SET ");
+        for (String col : viewCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("NEW.");
+          sb.append(col);
+          sb.append(", ");
+        }
+        sb.deleteCharAt(sb.length()-1);
+        sb.append(" WHERE ");
+        for (String col : keysCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          sb.append(" AND ");
+        }
+        for (String col : viewCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          sb.append(" AND ");
+        }
+        sb.append(" TRUE;");
+        
+      case "DELETE":
+        // try to Update original table with null/default value, if it fails, then delete the rows.
+        sb.append("UPDATE ");
+        sb.append(table);
+        sb.append(" SET ");
+        for (String col : viewCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("DEFAULT ,");
+        }
+        sb.deleteCharAt(sb.length()-1);
+        sb.append(" WHERE ");
+        for (String col : keysCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          sb.append(" AND ");
+        }
+        for (String col : viewCols) {
+          sb.append(col);
+          sb.append("=");
+          sb.append("OLD.");
+          sb.append(col);
+          sb.append(" AND ");
+        }
+        sb.append(" TRUE;");
+        break;
+    }
+    
+    return sb.toString();   
   }
   // useful for when view is a projection of the table, list the subcolumns in the collist
   private String genfuncBody(String operation, String table, String view, String collist) {
