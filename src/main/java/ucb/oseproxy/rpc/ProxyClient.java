@@ -5,7 +5,6 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import ucb.oseproxy.client.OSEResultSet;
 import ucb.oseproxy.smo.SMOCommand.Command;
-import ucb.oseproxy.util.ProtobufEnvelope;
 import ucb.oseproxy.util.ProxyUtil;
 
 import java.io.IOException;

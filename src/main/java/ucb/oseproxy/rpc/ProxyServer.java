@@ -21,7 +21,6 @@ import io.grpc.stub.StreamObserver;
 import ucb.oseproxy.server.OSEServer;
 import ucb.oseproxy.smo.SMOCommand.Command;
 import ucb.oseproxy.util.DynamicSchema;
-import ucb.oseproxy.util.ProtobufEnvelope;
 
 
 public class ProxyServer {
@@ -71,7 +70,7 @@ public class ProxyServer {
     server.blockUntilShutdown();
   }
 
-  private class OSEProxyImpl extends OSEProxyGrpc.AbstractOSEProxy {
+  private class OSEProxyImpl extends OSEProxyGrpc.OSEProxyImplBase {
     Map<String, DynamicSchema> rsProtoMap;
 
     public OSEProxyImpl() {
