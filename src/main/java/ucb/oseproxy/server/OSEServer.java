@@ -16,7 +16,9 @@ public class OSEServer {
   static final String DB_URL = "jdbc:postgresql://%s:%d/%s";
   private static OSEServer instance = null;
   private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
+  // map a connID to connection
   private HashMap<String, Connection> connMap;
+  // map a resultSetId to a ResultSet
   private HashMap<String, ResultSet> rsMap;
   // map a db to a SMO
   private HashMap<String, SMOCommand> smoMap; 
@@ -102,17 +104,20 @@ public class OSEServer {
     return null;
   }
   
-  public void execSMO(String connId, Command cmd, List<String> options ) {
+  public String execSMO(String connId, Command cmd, List<String> options ) {
     // find the db the conn belong to
     Connection conn = this.getConnection(connId);
     try {
       String dbURL = conn.getMetaData().getURL();
       logger.info("execSMO dbURL" + dbURL);
+      String uuid = ProxyUtil.randomId();
       SMOCommand smo = new SMOCommand(conn, cmd, options);
-      smoMap.put(dbURL, smo);
-      smo.createView();
+      smoMap.put(uuid, smo);
+      smo.createView(); 
+      return uuid;
     } catch (SQLException e) {
       e.printStackTrace();
+      return null;
     }
     // find out if there are any outstanding SMOs
     

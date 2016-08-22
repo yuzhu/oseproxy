@@ -207,8 +207,8 @@ public class ProxyServer {
     public void execSMO(SMORequest req, StreamObserver<SMOReply> responseObserver) {
       logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getCmd());
       SMOReply reply = null;
-      OSEServer.getInstance().execSMO(req.getConnId(), Command.values()[req.getCmd()], req.getArgList());
-      
+      String smoid = OSEServer.getInstance().execSMO(req.getConnId(), Command.values()[req.getCmd()], req.getArgList());
+      reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
 

@@ -32,7 +32,9 @@ public class ClientThread extends Thread {
          
         String opt[] = {"largeppl", "personid", "lastname, firstname", "address,city"};
         // Issue SMO
-        client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        String smoId = client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        client.commitSMO(connId, smoId);
+        
          
       } finally {
         client.shutdown();

@@ -85,7 +85,7 @@ public class ProxyClient {
     return rs;
   }
   
-  public void issueSMO(String connId, Command cmd, String[] opts) {
+  public String issueSMO(String connId, Command cmd, String[] opts) {
     logger.info("Running SMO cmd connection " + connId + " cmd : " + cmd);
     SMORequest.Builder requestBuilder = SMORequest.newBuilder().setConnId(connId).setCmd(cmd.ordinal());
     for (String opt :opts) {
@@ -95,9 +95,10 @@ public class ProxyClient {
     SMOReply response;
     try {
       response = blockingStub.execSMO(request);
+      return response.getSmoId();
     } catch (StatusRuntimeException e) {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
-      return;
+      return null;
     }
   }
   
@@ -121,9 +122,6 @@ public class ProxyClient {
     
     ClientThread schanger = new ClientThread(dbURL, dbPort, dbname, username, password);
     
-
-  
-  
     ProxyClient client = new ProxyClient("localhost", 50051);
     try {
       String connId = client.connect(dbURL, dbPort, dbname, username, password);
@@ -131,20 +129,28 @@ public class ProxyClient {
       ResultSet rs = client.execQuery(connId, "select * from persons");
       rs.next();
       schanger.start();
-      
- 
+      /*
+      // while inserting large number of values into a table, we migrate 
       for (int i=10000001; i <=100000000; i++) {
         int ret = client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
 
       }
+      */
     } catch (SQLException e) {
       logger.warning(e.getMessage());
     } finally {
       client.shutdown();
     }
-    
+    System.out.println("Press enter to commit");
+    System.in.read();
     schanger.join();
     logger.info("All threads finished");
+  }
+
+  public void commitSMO(String connId, String smoId) {
+    // TODO Auto-generated method stub
+    return;
+    
   }
 
 
