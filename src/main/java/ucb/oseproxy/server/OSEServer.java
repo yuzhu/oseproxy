@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import ucb.oseproxy.rpc.ProxyServer;
 import ucb.oseproxy.smo.SMOCommand;
 import ucb.oseproxy.smo.SMOCommand.Command;
+import ucb.oseproxy.smo.SMOFactory;
 import ucb.oseproxy.util.ProxyUtil;
 
 public class OSEServer {
@@ -111,7 +112,8 @@ public class OSEServer {
       String dbURL = conn.getMetaData().getURL();
       logger.info("execSMO dbURL" + dbURL);
       String uuid = ProxyUtil.randomId();
-      SMOCommand smo = new SMOCommand(conn, cmd, options);
+      SMOCommand smo = SMOFactory.getSMO(conn, cmd, options);
+      
       smoMap.put(uuid, smo);
       smo.createView(); 
       return uuid;

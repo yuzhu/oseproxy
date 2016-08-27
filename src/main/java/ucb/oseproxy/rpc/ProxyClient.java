@@ -120,22 +120,22 @@ public class ProxyClient {
       password = args[4];
     }
     
-    ClientThread schanger = new ClientThread(dbURL, dbPort, dbname, username, password);
+    ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password);
     
     ProxyClient client = new ProxyClient("localhost", 50051);
     try {
       String connId = client.connect(dbURL, dbPort, dbname, username, password);
       logger.info("Connection id " + connId);
-      ResultSet rs = client.execQuery(connId, "select * from persons");
-      rs.next();
+       ResultSet rs = client.execQuery(connId, "select * from persons");
+       rs.next();
       schanger.start();
-      /*
-      // while inserting large number of values into a table, we migrate 
-      for (int i=10000001; i <=100000000; i++) {
-        int ret = client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'Yu', 'Milvia', 'Berkeley')");
-
+      
+      /// while inserting large number of values into a table, we migrate 
+      for (int i=10020000; i <=10022000; i++) {
+        client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'David', 'Milvia', 'Berkeley')");
+        //client.execUpdate(connId, "insert into OSE_VIEW1_largeppl values(" + i*2 + ", 'Brewer', 'Eric')");
       }
-      */
+      
     } catch (SQLException e) {
       logger.warning(e.getMessage());
     } finally {
