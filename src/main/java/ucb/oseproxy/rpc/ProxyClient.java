@@ -131,7 +131,7 @@ public class ProxyClient {
       schanger.start();
       
       /// while inserting large number of values into a table, we migrate 
-      for (int i=10020000; i <=10022000; i++) {
+      for (int i=10030000; i <10031000; i++) {
         client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'David', 'Milvia', 'Berkeley')");
         //client.execUpdate(connId, "insert into OSE_VIEW1_largeppl values(" + i*2 + ", 'Brewer', 'Eric')");
       }

@@ -14,6 +14,8 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   protected Command cmd;
   protected List<String> args;
   protected List<String> resultTables;
+  protected List<String> views = new ArrayList<String>();
+  protected List<String> tables = new ArrayList<String>();
   
   private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
   
@@ -34,16 +36,20 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     resultTables = new ArrayList<String>();
   }
   
+  private String antiLoopVar(String tablename, String operation) {
+    return "triggered " + tablename + operation;
+  }
   protected String setupTriggerFuncforView(String tablename, String operation, String funcBody) throws SQLException{
     Statement stmt = conn.createStatement();
     StringBuilder triggerString = new StringBuilder();
+    String antiLoop = antiLoopVar(tablename, operation);
     String triggerFunc = tablename + "_" + operation + "_func";
     triggerString.append("CREATE OR REPLACE FUNCTION "+ triggerFunc );
     triggerString.append("() RETURNS trigger AS $" + triggerFunc + "$");
     triggerString.append(" BEGIN ");
-    //triggerString.append(" IF get_var('triggered') = 'no' THEN PERFORM set_var('triggered', 'yes');");
+    //triggerString.append(" IF get_var('"+ antiLoop + "') = 'no' THEN PERFORM set_var('"+ antiLoop +"', 'yes');");
     triggerString.append(funcBody);
-    //triggerString.append( "PERFORM set_var('triggered', 'no'); END IF;");
+    //triggerString.append( "PERFORM set_var('"+ antiLoop +"', 'no'); END IF;");
     triggerString.append(" RETURN NEW; ");
     triggerString.append("END; ");
     triggerString.append("$" + triggerFunc + "$ LANGUAGE plpgsql;");
@@ -52,8 +58,9 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     return triggerFunc;
   }
   
+
   protected void attachTrigger(Statement stmt, String tablename, String triggerName,  String triggerFunc, String op) throws SQLException {
-    stmt.addBatch("DROP TRIGGER IF EXISTS " + triggerName + " on " + tablename + ";");
+    
     StringBuilder sb = new StringBuilder();
     sb.append("CREATE TRIGGER ");
     sb.append(triggerName);
@@ -64,8 +71,8 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     sb.append(" FOR EACH ROW EXECUTE PROCEDURE ");
     sb.append(triggerFunc);
     sb.append("();");
-    logger.info("attach trigger \n" + sb.toString());
     stmt.addBatch(sb.toString());
+    logger.info("attach trigger \n" + sb.toString());
   }
   
   protected Connection getConn()  {
@@ -73,13 +80,9 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   }
 
   
-  protected List<String> getTables() {
-    return null;
-  }
+  protected abstract List<String> getTables();
   
-  protected List<String> getViews() {
-    return null;
-  }
+  protected abstract List<String> getViews();
   
   protected void dropTables() {
     Connection conn = getConn();
@@ -90,6 +93,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
       sb.append(" ,");
     }
     sb.deleteCharAt(sb.length()-1);
+    sb.append(";");
     logger.info("Deleting tables: " + sb.toString());
     try {
       Statement stmt = conn.createStatement();
@@ -109,6 +113,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
       sb.append(" ,");
     }
     sb.deleteCharAt(sb.length()-1);
+    sb.append(";");
     logger.info("Deleting views: " + sb.toString());
     try {
       Statement stmt = conn.createStatement();
@@ -118,12 +123,13 @@ public abstract class SMOAbstractCommand implements SMOCommand {
       logger.info("Dropping table failed");
     }
   }
-  protected abstract void createViews() throws SQLException;
+  protected abstract void createViews(Statement stmt) throws SQLException;
+  protected abstract void dropTriggers() throws SQLException;
   
-  protected abstract void createTriggers() throws SQLException;
+  protected abstract void createTriggers(Statement stmt) throws SQLException;
   protected abstract void createReverseTriggers() throws SQLException;
   
-  private String getTriggerName(String tablename, String triggerFunc) {
+  protected String getTriggerName(String tablename, String triggerFunc) {
     return "SMO_" + tablename + "_" + triggerFunc;
   }
   
@@ -152,19 +158,27 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     // Create new view based on 
     
     try {
+      
+      dropTriggers();
       conn.setAutoCommit(false);
-      createViews();
-      createTriggers();
+      Statement stmt = conn.createStatement();
+      createTriggers(stmt);
+      createViews(stmt);
       //createReverseTriggers();
+      stmt.executeBatch();
       conn.commit();
       conn.setAutoCommit(true);
       //convertViews();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+      e.getNextException().printStackTrace();
+      
       logger.warning("Creating view stage failed");
     }
   }
+
+
 
 
   @Override

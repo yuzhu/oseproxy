@@ -30,7 +30,7 @@ public class ClientThread extends Thread {
         String connId = client.connect(dbURL, dbPort, dbname, username, password);
         logger.info("Thread " + name + " Connection id " + connId);
          
-        String opt[] = {"largeppl", "personid", "lastname, firstname", "address,city"};
+        String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
         // Issue SMO
         String smoId = client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
         client.commitSMO(connId, smoId);
