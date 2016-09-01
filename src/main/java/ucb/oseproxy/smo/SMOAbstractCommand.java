@@ -68,7 +68,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     sb.append(op);
     sb.append(" on ");
     sb.append(tablename);
-    sb.append(" FOR EACH ROW EXECUTE PROCEDURE ");
+    sb.append(" FOR EACH ROW WHEN (pg_trigger_depth() < 1) EXECUTE PROCEDURE ");
     sb.append(triggerFunc);
     sb.append("();");
     stmt.addBatch(sb.toString());
@@ -104,7 +104,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     }
   }
   
-  protected void dropViews() {
+  protected void dropViews(Statement stmt) throws SQLException {
     Connection conn = getConn();
     StringBuffer sb = new StringBuffer();
     sb.append("DROP MATERIALIZED VIEW IF EXISTS ");
@@ -115,19 +115,13 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     sb.deleteCharAt(sb.length()-1);
     sb.append(";");
     logger.info("Deleting views: " + sb.toString());
-    try {
-      Statement stmt = conn.createStatement();
-      stmt.executeUpdate(sb.toString());
-    } catch (SQLException e) {
-      e.printStackTrace();
-      logger.info("Dropping table failed");
-    }
+    stmt.addBatch(sb.toString());
   }
   protected abstract void createViews(Statement stmt) throws SQLException;
   protected abstract void dropTriggers() throws SQLException;
   
   protected abstract void createTriggers(Statement stmt) throws SQLException;
-  protected abstract void createReverseTriggers() throws SQLException;
+  protected abstract void createReverseTriggers(Statement stmt) throws SQLException;
   
   protected String getTriggerName(String tablename, String triggerFunc) {
     return "SMO_" + tablename + "_" + triggerFunc;
@@ -158,13 +152,17 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     // Create new view based on 
     
     try {
-      
       dropTriggers();
       conn.setAutoCommit(false);
       Statement stmt = conn.createStatement();
+      dropViews(stmt);
+      
+      
       createTriggers(stmt);
+      
       createViews(stmt);
-      //createReverseTriggers();
+      createReverseTriggers(stmt);
+       
       stmt.executeBatch();
       conn.commit();
       conn.setAutoCommit(true);

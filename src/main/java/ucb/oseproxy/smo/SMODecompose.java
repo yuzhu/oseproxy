@@ -33,7 +33,7 @@ public class SMODecompose extends SMOAbstractCommand {
 
   protected void createViews(Statement stmt) throws SQLException {
     
-    dropViews();
+    
     String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s;";
     String view1 = String.format(viewString, getViewName(table, 1), collista, collistb, table);
     logger.info(view1);
@@ -224,7 +224,9 @@ public class SMODecompose extends SMOAbstractCommand {
       for (String op : ops) {
         String triggerFunc = tablename + "_" + op + "_func";
         String triggerName = getTriggerName(tablename, triggerFunc);
-        stmt.executeUpdate("DROP TRIGGER IF EXISTS " + triggerName + " on " + tablename + ";");
+        String query = "DROP TRIGGER IF EXISTS " + triggerName + " on " + tablename + ";";
+        logger.info(query);
+        stmt.executeUpdate(query);
       }
     }
   }
@@ -251,7 +253,18 @@ public class SMODecompose extends SMOAbstractCommand {
   }
 
   @Override
-  protected void createReverseTriggers() throws SQLException {
+  protected void createReverseTriggers(Statement stmt) throws SQLException {
+    
+    String insertView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "INSERT",
+        genReverseFuncBody("INSERT", table, getViewName(table, 1), collista, collistb, collistc));
+    String deleteView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "DELETE",
+        genReverseFuncBody("DELETE", table, getViewName(table, 1), collista, collistb, collistc));
+    String updateView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "UPDATE",
+        genReverseFuncBody("UPDATE", table, getViewName(table, 1), collista, collistb, collistc));
+
+    attachTriggers(stmt, getViewName(table, 1), insertView1Func, updateView1Func, deleteView1Func);
+    
+    
     String insertView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "INSERT",
         genReverseFuncBody("INSERT", table, getViewName(table, 2), collista, collistc, collistb));
     String deleteView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "DELETE",
@@ -259,8 +272,9 @@ public class SMODecompose extends SMOAbstractCommand {
     String updateView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "UPDATE",
         genReverseFuncBody("UPDATE", table, getViewName(table, 2), collista, collistc, collistb));
 
-    Statement stmt = conn.createStatement();
     attachTriggers(stmt, getViewName(table, 2), insertView2Func, updateView2Func, deleteView2Func);
+    
+ 
   }
 
   @Override
