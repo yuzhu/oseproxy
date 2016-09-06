@@ -10,12 +10,13 @@ import java.util.logging.Logger;
 
 public class SMODecompose extends SMOAbstractCommand {
   private String table, collista, collistb, collistc;
+  private List<String> views;
   
   private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
 
   public SMODecompose(Connection conn, Command cmd2, List<String> options) {
     super(conn, cmd2, options);
-    if (args.size() != 4) {
+    if (args.size() != 4 || args.size() != 6) {
       logger.warning("Number of options not valid for DECOMPOSE_TABLE");
     }
     table = args.get(0);
@@ -23,21 +24,30 @@ public class SMODecompose extends SMOAbstractCommand {
     collistb = args.get(2);
     collistc = args.get(3);
     tables.add(table);
-    views.add(getViewName(table, 1));
-    views.add(getViewName(table, 2));
+    if (args.size() == 4) {
+      views.add(genViewName(table, 1));
+      views.add(genViewName(table, 2));
+    } else {
+      views.add(args.get(4));
+      views.add(args.get(5));
+    }
   }
 
-  private String getViewName(String tablename, int index) {
+  private String genViewName(String tablename, int index) {
     return "OSE_VIEW" + index + "_" + tablename;
+  }
+  
+  private String getViewName(int index) {
+    return views.get(index);
   }
 
   protected void createViews(Statement stmt) throws SQLException {
     
     
     String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s;";
-    String view1 = String.format(viewString, getViewName(table, 1), collista, collistb, table);
+    String view1 = String.format(viewString, getViewName(1), collista, collistb, table);
     logger.info(view1);
-    String view2 = String.format(viewString, getViewName(table, 2), collista, collistc, table);
+    String view2 = String.format(viewString, getViewName(2), collista, collistc, table);
     logger.info(view2);
     stmt.addBatch(view1);
     stmt.addBatch(view2);
@@ -241,38 +251,38 @@ public class SMODecompose extends SMOAbstractCommand {
   @Override
   protected void createTriggers(Statement stmt) throws SQLException {
     String insertFunc = this.setupTriggerFuncforView(table, "INSERT",
-        genfuncBody("INSERT", table, getViewName(table, 1), collista + "," + collistb)
-            + genfuncBody("INSERT", table, getViewName(table, 2), collista + "," + collistc));
+        genfuncBody("INSERT", table, getViewName(1), collista + "," + collistb)
+            + genfuncBody("INSERT", table, getViewName(2), collista + "," + collistc));
     String deleteFunc = this.setupTriggerFuncforView(table, "DELETE",
-        genfuncBody("DELETE", table, getViewName(table, 1), collista + "," + collistb)
-            + genfuncBody("DELETE", table, getViewName(table, 2), collista + "," + collistc));
+        genfuncBody("DELETE", table, getViewName(1), collista + "," + collistb)
+            + genfuncBody("DELETE", table, getViewName(2), collista + "," + collistc));
     String updateFunc = this.setupTriggerFuncforView(table, "UPDATE",
-        genfuncBody("UPDATE", table, getViewName(table, 1), collista + "," + collistb)
-            + genfuncBody("UPDATE", table, getViewName(table, 2), collista + "," + collistc));
+        genfuncBody("UPDATE", table, getViewName(1), collista + "," + collistb)
+            + genfuncBody("UPDATE", table, getViewName(2), collista + "," + collistc));
     attachTriggers(stmt, table, insertFunc, updateFunc, deleteFunc);
   }
 
   @Override
   protected void createReverseTriggers(Statement stmt) throws SQLException {
     
-    String insertView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "INSERT",
-        genReverseFuncBody("INSERT", table, getViewName(table, 1), collista, collistb, collistc));
-    String deleteView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "DELETE",
-        genReverseFuncBody("DELETE", table, getViewName(table, 1), collista, collistb, collistc));
-    String updateView1Func = this.setupTriggerFuncforView(getViewName(table, 1), "UPDATE",
-        genReverseFuncBody("UPDATE", table, getViewName(table, 1), collista, collistb, collistc));
+    String insertView1Func = this.setupTriggerFuncforView(getViewName(1), "INSERT",
+        genReverseFuncBody("INSERT", table, getViewName(1), collista, collistb, collistc));
+    String deleteView1Func = this.setupTriggerFuncforView(getViewName(1), "DELETE",
+        genReverseFuncBody("DELETE", table, getViewName(1), collista, collistb, collistc));
+    String updateView1Func = this.setupTriggerFuncforView(getViewName(1), "UPDATE",
+        genReverseFuncBody("UPDATE", table, getViewName(1), collista, collistb, collistc));
 
-    attachTriggers(stmt, getViewName(table, 1), insertView1Func, updateView1Func, deleteView1Func);
+    attachTriggers(stmt, getViewName(1), insertView1Func, updateView1Func, deleteView1Func);
     
     
-    String insertView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "INSERT",
-        genReverseFuncBody("INSERT", table, getViewName(table, 2), collista, collistc, collistb));
-    String deleteView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "DELETE",
-        genReverseFuncBody("DELETE", table, getViewName(table, 2), collista, collistc, collistb));
-    String updateView2Func = this.setupTriggerFuncforView(getViewName(table, 2), "UPDATE",
-        genReverseFuncBody("UPDATE", table, getViewName(table, 2), collista, collistc, collistb));
+    String insertView2Func = this.setupTriggerFuncforView(getViewName(2), "INSERT",
+        genReverseFuncBody("INSERT", table, getViewName(2), collista, collistc, collistb));
+    String deleteView2Func = this.setupTriggerFuncforView(getViewName(2), "DELETE",
+        genReverseFuncBody("DELETE", table, getViewName(2), collista, collistc, collistb));
+    String updateView2Func = this.setupTriggerFuncforView(getViewName(2), "UPDATE",
+        genReverseFuncBody("UPDATE", table, getViewName(2), collista, collistc, collistb));
 
-    attachTriggers(stmt, getViewName(table, 2), insertView2Func, updateView2Func, deleteView2Func);
+    attachTriggers(stmt, getViewName(2), insertView2Func, updateView2Func, deleteView2Func);
     
  
   }
@@ -281,6 +291,12 @@ public class SMODecompose extends SMOAbstractCommand {
   public void rollbackSMO() {
     // TODO Auto-generated method stub
 
+  }
+
+  @Override
+  public void commitSMO() {
+    // TODO Auto-generated method stub
+    
   }
 
 }

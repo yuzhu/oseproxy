@@ -22,9 +22,11 @@ public class SMOThread extends ClientThread {
         String connId = client.connect(dbURL, dbPort, dbname, username, password);
         logger.info("Thread " + name + " Connection id " + connId);
          
-        String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
+        //String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
         // Issue SMO
-        client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        //client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        String opt[] = {"largeppl", "persons", "combineppl"};
+        client.issueSMO(connId, Command.MERGE_TABLE, opt);
          
       } finally {
         client.shutdown();

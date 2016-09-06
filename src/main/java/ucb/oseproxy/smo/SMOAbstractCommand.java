@@ -180,11 +180,6 @@ public abstract class SMOAbstractCommand implements SMOCommand {
 
 
   @Override
-  public void commitSMO() {
-    // Drop tables
-    
-    // TODO Auto-generated method stub
-
-  }
+  public abstract void commitSMO();
 
 }

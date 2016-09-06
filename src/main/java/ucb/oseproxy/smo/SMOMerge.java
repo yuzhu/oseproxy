@@ -29,6 +29,8 @@ public class SMOMerge extends SMOAbstractCommand {
     r = args.get(0);
     s = args.get(1);
     t = args.get(2);
+    tables = new ArrayList<String>();
+    views = new ArrayList<String>();
     tables.add(r);
     tables.add(s);
     views.add(t);
@@ -47,7 +49,7 @@ public class SMOMerge extends SMOAbstractCommand {
       if (rsmdr.getColumnCount() != rsmdt.getColumnCount())
         throw new IllegalArgumentException("column mismatch");
       for (int i = 1; i<= rsmdr.getColumnCount(); i++){
-        if (rsmdr.getColumnName(i) != rsmdt.getColumnName(i))
+        if (!rsmdr.getColumnName(i).equals( rsmdt.getColumnName(i)))
           throw new IllegalArgumentException("column mismatch");
         fields.add(rsmdr.getColumnName(i));
       }
@@ -70,7 +72,7 @@ public class SMOMerge extends SMOAbstractCommand {
 
   @Override
   protected void createViews(Statement stmt) throws SQLException {
-    String viewString = "CREATE MATERIALIZED VIEW %s AS select * FROM %s UNION select * FROM %s;";
+    String viewString = "CREATE MATERIALIZED VIEW %s AS select * FROM %s UNION ALL select * FROM %s;";
     String view1 = String.format(viewString, t, r, s);
     logger.info(view1);
     
@@ -139,11 +141,12 @@ public class SMOMerge extends SMOAbstractCommand {
         sb.append(" WHERE ");
         for (String col : this.fields) {
           sb.append(col);
-          sb.append(" = NEW.");
+          sb.append(" = OLD.");
           sb.append(col);
-          sb.append(",");
+          if (fields.get(fields.size() - 1) != col) { // col is NOT last
+            sb.append(" AND ");
+          }
         }
-        sb.deleteCharAt(sb.length() - 1);
         sb.append(";");
         break;
       case "DELETE":
@@ -155,7 +158,7 @@ public class SMOMerge extends SMOAbstractCommand {
           sb.append("=");
           sb.append("OLD.");
           sb.append(col);
-          if (fields.get(fields.size() - 1) != col) { // col is last
+          if (fields.get(fields.size() - 1) != col) { // col is  NOT last
             sb.append(" AND ");
           }
         }
@@ -172,11 +175,87 @@ public class SMOMerge extends SMOAbstractCommand {
   @Override
   protected void createReverseTriggers(Statement stmt) throws SQLException {
     // TODO Auto-generated method stub
+    for (String view : this.getViews()){ // Should be just one
+      String insertFunc = this.setupTriggerFuncforView(view, "INSERT",
+          genReverseFuncBody("INSERT", view, tables));
+      String deleteFunc = this.setupTriggerFuncforView(view, "DELETE",
+          genReverseFuncBody("DELETE", view, tables));
+      String updateFunc = this.setupTriggerFuncforView(view, "UPDATE",
+          genReverseFuncBody("UPDATE", view, tables));
+      attachTriggers(stmt, view, insertFunc, updateFunc, deleteFunc);
+      }
     
+  }
+
+  private String genReverseFuncBody(String operation, String view, List<String> tables) {
+    StringBuilder sb = new StringBuilder();
+    switch (operation) {
+      case "INSERT":
+        sb.append("INSERT INTO ");
+        sb.append(tables.get(0));
+        sb.append(" VALUES (");
+        for (String col : this.fields) {
+          sb.append("NEW.");
+          sb.append(col);
+          sb.append(",");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append(");");
+
+        break;
+      case "UPDATE":
+        for (String table: tables){
+          sb.append("UPDATE ");
+          sb.append(table);
+          sb.append(" SET ");
+          for (String col : this.fields) {
+            sb.append(col);
+            sb.append(" = NEW.");
+            sb.append(col);
+            sb.append(",");
+          }
+          sb.deleteCharAt(sb.length() - 1);
+          sb.append(" WHERE ");
+          for (String col : this.fields) {
+            sb.append(col);
+            sb.append(" = OLD.");
+            sb.append(col);
+            if (fields.get(fields.size() - 1) != col) { // col is NOT last
+              sb.append(" AND ");
+            }
+          }
+          sb.append(";");
+        }
+        break;
+      case "DELETE":
+        for (String table: tables){
+          sb.append("DELETE FROM ");
+          sb.append(table);
+          sb.append(" WHERE ");
+          for (String col : fields) {
+            sb.append(col);
+            sb.append("=");
+            sb.append("OLD.");
+            sb.append(col);
+            if (fields.get(fields.size() - 1) != col) { // col is  NOT last
+              sb.append(" AND ");
+            }
+          }
+          sb.append(";");
+        }
+        break;
+    }
+    return null;
   }
 
   @Override
   public void rollbackSMO() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void commitSMO() {
     // TODO Auto-generated method stub
     
   }
