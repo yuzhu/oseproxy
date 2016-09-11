@@ -1,16 +1,11 @@
 package ucb.oseproxy.smo;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import ucb.oseproxy.smo.SMOCommand.Command;
-import java.lang.IllegalArgumentException;
 
 
 // MERGE TABLE (R,S) INTO T, assuming R, S has the same structure
@@ -19,45 +14,37 @@ public class SMOMerge extends SMOAbstractCommand {
   private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
   private String r,s,t;
   private List<String> tables, views;
-  private List<String> fields;
+  private List<String> fields = null;
   
-  public SMOMerge(Connection conn, Command cmd2, List<String> options) {
-    super(conn, cmd2, options);
-    if (args.size() != 3) {
-      logger.warning("Number of options not valid for DECOMPOSE_TABLE");
-    }
-    r = args.get(0);
-    s = args.get(1);
-    t = args.get(2);
+  
+  public void init(String r, String s, String t) {
+    this.r=r;
+    this.s=s;
+    this.t=t;
     tables = new ArrayList<String>();
     views = new ArrayList<String>();
     tables.add(r);
     tables.add(s);
     views.add(t);
     
-    Statement stmt;
-    // populate fields list
-    fields = new ArrayList<String>();
-    try {
-      stmt = conn.createStatement();
-      // Verify R and S has same columns so they can merge
-      ResultSet rsr = stmt.executeQuery("select * from " + r + " where 0=1");
-      ResultSetMetaData rsmdr = rsr.getMetaData();
-      
-      ResultSet rst = stmt.executeQuery("select * from " + s + " where 0=1");
-      ResultSetMetaData rsmdt = rst.getMetaData();
-      if (rsmdr.getColumnCount() != rsmdt.getColumnCount())
-        throw new IllegalArgumentException("column mismatch");
-      for (int i = 1; i<= rsmdr.getColumnCount(); i++){
-        if (!rsmdr.getColumnName(i).equals( rsmdt.getColumnName(i)))
-          throw new IllegalArgumentException("column mismatch");
-        fields.add(rsmdr.getColumnName(i));
-      }
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+
     
+  }
+  
+  public void connect(Connection conn){
+    super.connect(conn);
+    // populate fields list
+    if (fields == null){
+      fields = Utils.getColumns(conn, r);
+    }
+  }
+
+  public SMOMerge(List<String> options) {
+    this.cmd = Command.MERGE_TABLE;
+    if (options.size() != 3) {
+      logger.warning("Number of options not valid for DECOMPOSE_TABLE");
+    }
+    init(options.get(0), options.get(1),options.get(2));
   }
 
   @Override

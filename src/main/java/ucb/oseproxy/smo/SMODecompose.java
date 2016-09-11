@@ -9,20 +9,21 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class SMODecompose extends SMOAbstractCommand {
-  private String table, collista, collistb, collistc;
+  private String table, tablecolumns, view1columns, view2columns;
   private List<String> views;
   
-  private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
-
-  public SMODecompose(Connection conn, Command cmd2, List<String> options) {
-    super(conn, cmd2, options);
+  private static Logger logger = Logger.getLogger(SMODecompose.class.getName());
+  public SMODecompose(){
+    this.cmd = Command.DECOMPOSE_TABLE;
+  }
+  public SMODecompose(List<String> args) {
     if (args.size() != 4 || args.size() != 6) {
       logger.warning("Number of options not valid for DECOMPOSE_TABLE");
     }
     table = args.get(0);
-    collista = args.get(1);
-    collistb = args.get(2);
-    collistc = args.get(3);
+    tablecolumns = args.get(1);
+    view1columns = args.get(2);
+    view2columns = args.get(3);
     tables.add(table);
     if (args.size() == 4) {
       views.add(genViewName(table, 1));
@@ -31,6 +32,25 @@ public class SMODecompose extends SMOAbstractCommand {
       views.add(args.get(4));
       views.add(args.get(5));
     }
+  }
+  
+  public SMODecompose(String tablename, String view1, String view2, String collist1, String collist2) {
+    table = tablename;
+    tables.add(table);
+    view1columns = collist1;
+    view2columns = collist2;
+    views.add(view1);
+    views.add(view2);
+  }
+  public void connect(Connection conn){
+    super.connect(conn);
+    if (tablecolumns == null)
+      Utils.getColumns(conn, table);
+  }
+  
+  public SMODecompose(Connection conn, Command cmd2, List<String> args) {
+    this(args);
+    this.connect(conn);
   }
 
   private String genViewName(String tablename, int index) {
@@ -45,9 +65,9 @@ public class SMODecompose extends SMOAbstractCommand {
     
     
     String viewString = "CREATE MATERIALIZED VIEW %s AS select %s, %s FROM %s;";
-    String view1 = String.format(viewString, getViewName(1), collista, collistb, table);
+    String view1 = String.format(viewString, getViewName(1), tablecolumns, view1columns, table);
     logger.info(view1);
-    String view2 = String.format(viewString, getViewName(2), collista, collistc, table);
+    String view2 = String.format(viewString, getViewName(2), tablecolumns, view2columns, table);
     logger.info(view2);
     stmt.addBatch(view1);
     stmt.addBatch(view2);
@@ -241,24 +261,19 @@ public class SMODecompose extends SMOAbstractCommand {
     }
   }
 
-  protected List<String> getTables(){
-    return this.tables;
-  }
-  protected List<String> getViews(){
-    return this.views;
-  }
+  
   
   @Override
   protected void createTriggers(Statement stmt) throws SQLException {
     String insertFunc = this.setupTriggerFuncforView(table, "INSERT",
-        genfuncBody("INSERT", table, getViewName(1), collista + "," + collistb)
-            + genfuncBody("INSERT", table, getViewName(2), collista + "," + collistc));
+        genfuncBody("INSERT", table, getViewName(1), tablecolumns + "," + view1columns)
+            + genfuncBody("INSERT", table, getViewName(2), tablecolumns + "," + view2columns));
     String deleteFunc = this.setupTriggerFuncforView(table, "DELETE",
-        genfuncBody("DELETE", table, getViewName(1), collista + "," + collistb)
-            + genfuncBody("DELETE", table, getViewName(2), collista + "," + collistc));
+        genfuncBody("DELETE", table, getViewName(1), tablecolumns + "," + view1columns)
+            + genfuncBody("DELETE", table, getViewName(2), tablecolumns + "," + view2columns));
     String updateFunc = this.setupTriggerFuncforView(table, "UPDATE",
-        genfuncBody("UPDATE", table, getViewName(1), collista + "," + collistb)
-            + genfuncBody("UPDATE", table, getViewName(2), collista + "," + collistc));
+        genfuncBody("UPDATE", table, getViewName(1), tablecolumns + "," + view1columns)
+            + genfuncBody("UPDATE", table, getViewName(2), tablecolumns + "," + view2columns));
     attachTriggers(stmt, table, insertFunc, updateFunc, deleteFunc);
   }
 
@@ -266,21 +281,21 @@ public class SMODecompose extends SMOAbstractCommand {
   protected void createReverseTriggers(Statement stmt) throws SQLException {
     
     String insertView1Func = this.setupTriggerFuncforView(getViewName(1), "INSERT",
-        genReverseFuncBody("INSERT", table, getViewName(1), collista, collistb, collistc));
+        genReverseFuncBody("INSERT", table, getViewName(1), tablecolumns, view1columns, view2columns));
     String deleteView1Func = this.setupTriggerFuncforView(getViewName(1), "DELETE",
-        genReverseFuncBody("DELETE", table, getViewName(1), collista, collistb, collistc));
+        genReverseFuncBody("DELETE", table, getViewName(1), tablecolumns, view1columns, view2columns));
     String updateView1Func = this.setupTriggerFuncforView(getViewName(1), "UPDATE",
-        genReverseFuncBody("UPDATE", table, getViewName(1), collista, collistb, collistc));
+        genReverseFuncBody("UPDATE", table, getViewName(1), tablecolumns, view1columns, view2columns));
 
     attachTriggers(stmt, getViewName(1), insertView1Func, updateView1Func, deleteView1Func);
     
     
     String insertView2Func = this.setupTriggerFuncforView(getViewName(2), "INSERT",
-        genReverseFuncBody("INSERT", table, getViewName(2), collista, collistc, collistb));
+        genReverseFuncBody("INSERT", table, getViewName(2), tablecolumns, view2columns, view1columns));
     String deleteView2Func = this.setupTriggerFuncforView(getViewName(2), "DELETE",
-        genReverseFuncBody("DELETE", table, getViewName(2), collista, collistc, collistb));
+        genReverseFuncBody("DELETE", table, getViewName(2), tablecolumns, view2columns, view1columns));
     String updateView2Func = this.setupTriggerFuncforView(getViewName(2), "UPDATE",
-        genReverseFuncBody("UPDATE", table, getViewName(2), collista, collistc, collistb));
+        genReverseFuncBody("UPDATE", table, getViewName(2), tablecolumns, view2columns, view1columns));
 
     attachTriggers(stmt, getViewName(2), insertView2Func, updateView2Func, deleteView2Func);
     

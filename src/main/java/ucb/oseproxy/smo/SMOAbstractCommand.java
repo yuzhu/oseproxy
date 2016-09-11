@@ -7,34 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ucb.oseproxy.smo.SMOCommand.Command;
-
 public abstract class SMOAbstractCommand implements SMOCommand {
   protected Connection conn;
   protected Command cmd;
-  protected List<String> args;
-  protected List<String> resultTables;
+
+  protected List<String> resultTables= new ArrayList<String>();
   protected List<String> views = new ArrayList<String>();
   protected List<String> tables = new ArrayList<String>();
   
   private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
-  
-  public SMOAbstractCommand(){};
-  
-  public SMOAbstractCommand(Connection conn, Command cmd2, List<String> options) {
-    // make a clone of the connection
-    try {
-      String dbURL = conn.getMetaData().getURL();
-      logger.info("dburl" + dbURL);
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    this.conn = conn;
-    this.cmd = cmd2;
-    this.args = options;
-    resultTables = new ArrayList<String>();
-  }
   
   private String antiLoopVar(String tablename, String operation) {
     return "triggered " + tablename + operation;
@@ -42,7 +23,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   protected String setupTriggerFuncforView(String tablename, String operation, String funcBody) throws SQLException{
     Statement stmt = conn.createStatement();
     StringBuilder triggerString = new StringBuilder();
-    String antiLoop = antiLoopVar(tablename, operation);
+    // String antiLoop = antiLoopVar(tablename, operation);
     String triggerFunc = tablename + "_" + operation + "_func";
     triggerString.append("CREATE OR REPLACE FUNCTION "+ triggerFunc );
     triggerString.append("() RETURNS trigger AS $" + triggerFunc + "$");
@@ -78,11 +59,18 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   protected Connection getConn()  {
     return conn;
   }
+  
+  protected void setConn(Connection conn){
+    this.conn = conn;
+  }
 
   
-  protected abstract List<String> getTables();
-  
-  protected abstract List<String> getViews();
+  protected List<String> getTables(){
+    return this.tables;
+  }
+  protected List<String> getViews(){
+    return this.views;
+  }
   
   protected void dropTables() {
     Connection conn = getConn();
@@ -176,7 +164,11 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     }
   }
 
-
+  @Override
+  public void connect(Connection conn) {
+    if ((conn!= null))
+      this.conn = conn;
+  }
 
 
   @Override
