@@ -12,9 +12,9 @@ public interface SMOCommand {
 
   public void connect(Connection conn);
   
-  public void createView();
+  public void executeSMO();
   
-  public void commitSMO();
+  public boolean commitSMO();
   
-  public void rollbackSMO();
+  public boolean rollbackSMO();
 }

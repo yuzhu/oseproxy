@@ -5,62 +5,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-public class SMODropTable extends SMOAbstractCommand {
-  
+public class SMODropTable extends SMOSimpleCommand {
+  String tableName;
   public SMODropTable() {
     // TODO Auto-generated constructor stub
   }
 
   public SMODropTable(String tablename) {
-    // TODO Auto-generated constructor stub
+    this.cmd = Command.DROP_TABLE;
+    this.tableName = tablename;
   }
 
   @Override
-  public void rollbackSMO() {
-    // TODO Auto-generated method stub
-
+  public void executeSMO() {
+    String dropTableString = "drop table if exists "  + tableName;
+    try {
+      Statement stmt = conn.createStatement(); 
+      stmt.executeUpdate( (dropTableString));
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
-
-  @Override
-  protected List<String> getTables() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected List<String> getViews() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected void createViews(Statement stmt) throws SQLException {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  protected void dropTriggers() throws SQLException {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  protected void createTriggers(Statement stmt) throws SQLException {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  protected void createReverseTriggers(Statement stmt) throws SQLException {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void commitSMO() {
-    // TODO Auto-generated method stub
-
-  }
-
 }

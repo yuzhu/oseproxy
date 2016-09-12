@@ -45,8 +45,6 @@ public class SMOFactory {
   }
   
   public static void main (String[] args) throws Exception {
-     BufferedReader buffer=new BufferedReader(new InputStreamReader(System.in));
-     String line=buffer.readLine();
-     SMOCommand cmd = SMOFactory.getSMO(line);
+     
   }
 }

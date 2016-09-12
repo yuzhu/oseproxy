@@ -115,7 +115,7 @@ public class OSEServer {
       SMOCommand smo = SMOFactory.getSMO(conn, cmd, options);
       
       smoMap.put(uuid, smo);
-      smo.createView(); 
+      smo.executeSMO(); 
       return uuid;
     } catch (SQLException e) {
       e.printStackTrace();

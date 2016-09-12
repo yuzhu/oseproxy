@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ucb.oseproxy.smo.SMOCommand.Command;
-
 public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   
   public SMOCommand visitDroptable(SMOParser.DroptableContext ctx) {
-    return null;
+    SMOCommand cmd = new SMODropTable(ctx.ID().getText());
+    return cmd;
   }
   
   public SMOCommand visitMergetable(SMOParser.MergetableContext ctx) {

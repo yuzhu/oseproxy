@@ -136,7 +136,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   }
   
   @Override
-  public void createView() {
+  public void executeSMO() {
     // Create new view based on 
     
     try {
@@ -172,6 +172,6 @@ public abstract class SMOAbstractCommand implements SMOCommand {
 
 
   @Override
-  public abstract void commitSMO();
-
+  public boolean commitSMO() {return false;}
+  public boolean rollbackSMO() {return false;}
 }

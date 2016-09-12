@@ -302,16 +302,4 @@ public class SMODecompose extends SMOAbstractCommand {
  
   }
 
-  @Override
-  public void rollbackSMO() {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void commitSMO() {
-    // TODO Auto-generated method stub
-    
-  }
-
 }

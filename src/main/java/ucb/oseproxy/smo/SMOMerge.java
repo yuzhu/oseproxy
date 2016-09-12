@@ -231,20 +231,9 @@ public class SMOMerge extends SMOAbstractCommand {
           sb.append(";");
         }
         break;
+      default:
+        return null;
     }
-    return null;
+    return sb.toString();
   }
-
-  @Override
-  public void rollbackSMO() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void commitSMO() {
-    // TODO Auto-generated method stub
-    
-  }
-
 }
