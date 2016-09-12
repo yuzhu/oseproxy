@@ -104,6 +104,24 @@ public class OSEServer {
 
     return null;
   }
+  public String execSMOString(String connId, String smoString) {
+    // find the db the conn belong to
+    Connection conn = this.getConnection(connId);
+    try {
+      String dbURL = conn.getMetaData().getURL();
+      logger.info("execSMO dbURL" + dbURL);
+      String uuid = ProxyUtil.randomId();
+      SMOCommand smo = SMOFactory.getSMO(smoString);
+      smo.connect(conn);
+      
+      smoMap.put(uuid, smo);
+      smo.executeSMO(); 
+      return uuid;
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
   
   public String execSMO(String connId, Command cmd, List<String> options ) {
     // find the db the conn belong to

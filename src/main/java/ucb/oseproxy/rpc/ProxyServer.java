@@ -214,6 +214,16 @@ public class ProxyServer {
 
     }
     
+    @Override
+    public void execSMOString(SMOStringRequest req, StreamObserver<SMOReply> responseObserver) {
+      logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getSmoCmd());
+      SMOReply reply = null;
+      String smoid = OSEServer.getInstance().execSMOString(req.getConnId(), req.getSmoCmd());
+      reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+    }
+    
     
   }
 }

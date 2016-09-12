@@ -102,6 +102,22 @@ public class ProxyClient {
     }
   }
   
+  public String issueSMOString(String connId, String smoCmd) {
+    logger.info("Running SMO cmd connection " + connId + " cmd : " + smoCmd);
+    
+    SMOStringRequest.Builder requestBuilder = SMOStringRequest.newBuilder().setConnId(connId).setSmoCmd(smoCmd);
+    // requestBuilder.
+    SMOStringRequest request = requestBuilder.build();
+    SMOReply response;
+    try {
+      response = blockingStub.execSMOString(request);
+      return response.getSmoId();
+    } catch (StatusRuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+      return null;
+    }
+  }
+  
   
 
   public static void main(String[] args) throws IOException, InterruptedException {

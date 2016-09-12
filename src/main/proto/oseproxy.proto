@@ -18,6 +18,7 @@ service OSEProxy {
   rpc readRow(RowRequest) returns (RowReply) {}
   rpc execSMO(SMORequest) returns (SMOReply) {}
   rpc execUpdate(UpdateRequest) returns (UpdateReply) {}
+  rpc execSMOString(SMOStringRequest) returns (SMOReply) {}
 }
 
 // The request message containing the user's name.
@@ -81,4 +82,9 @@ message SMORequest {
 message SMOReply {
 	int32 status = 1;
 	string smoId = 2;
+}
+
+message SMOStringRequest {
+	string connId = 1;
+	string smoCmd = 2;
 }
