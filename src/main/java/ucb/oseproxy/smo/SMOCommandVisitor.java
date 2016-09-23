@@ -6,8 +6,23 @@ import java.util.stream.Collectors;
 
 public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   
+  
+  public SMOCommand visitSmo_statement_plus_semi(SMOParser.Smo_statement_plus_semiContext ctx){
+    return visit(ctx.smo_statement());
+  }
+  
   public SMOCommand visitDroptable(SMOParser.DroptableContext ctx) {
     SMOCommand cmd = new SMODropTable(ctx.ID().getText());
+    return cmd;
+  }
+  
+  public SMOCommand visitCreatetable(SMOParser.CreatetableContext ctx){
+    SMOCommand cmd = new SMOCreateTable(ctx.ID().getText(), ctx.bracketlist().columnlist().getText());
+    return cmd;
+  }
+  
+  public SMOCommand visitRenametable(SMOParser.RenametableContext ctx){
+    SMOCommand cmd = new SMORenameTable(ctx.ID(0).getText(), ctx.ID(1).getText());
     return cmd;
   }
   
@@ -26,6 +41,8 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
         ctx.bracketlist(0).columnlist().getText(), ctx.bracketlist(1).columnlist().getText()
         );
   }
+  
+ 
   public static void main(String[] args) {
     // TODO Auto-generated method stub
 

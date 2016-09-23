@@ -211,7 +211,6 @@ public class ProxyServer {
       reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
-
     }
     
     @Override

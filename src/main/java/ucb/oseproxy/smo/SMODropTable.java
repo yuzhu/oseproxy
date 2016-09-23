@@ -6,9 +6,13 @@ import java.sql.Statement;
 import java.util.List;
 
 public class SMODropTable extends SMOSimpleCommand {
-  String tableName;
-  public SMODropTable() {
-    // TODO Auto-generated constructor stub
+  private String tableName;
+  public String getTableName() {
+    return tableName;
+  }
+
+  public void setTableName(String tableName) {
+    this.tableName = tableName;
   }
 
   public SMODropTable(String tablename) {
@@ -19,6 +23,7 @@ public class SMODropTable extends SMOSimpleCommand {
   @Override
   public void executeSMO() {
     String dropTableString = "drop table if exists "  + tableName;
+    
     try {
       Statement stmt = conn.createStatement(); 
       stmt.executeUpdate( (dropTableString));
