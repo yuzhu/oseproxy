@@ -26,6 +26,11 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
     return cmd;
   }
   
+  public SMOCommand visitCopytable(SMOParser.CopytableContext ctx) {
+    SMOCommand cmd = new SMOCopyTable(ctx.ID(0).getText(), ctx.ID(1).getText());
+    return cmd;
+  }
+  
   public SMOCommand visitMergetable(SMOParser.MergetableContext ctx) {
     List<String> strings = ctx.ID().stream()
         .map(object -> object.getText())
