@@ -43,7 +43,23 @@ public class SMOFactoryTest extends TestCase {
     assertTrue(((SMOMerge)smo).getTables().get(1).equals("old_text"));
     assertTrue(((SMOMerge)smo).getViews().get(0).equals("text"));
     
+    String testPartitionTable = "PARTITION TABLE table INTO table1, table2 WHERE table.col1 = 'OLD';";
+    smo = SMOFactory.getSMO(testPartitionTable);
+    assertTrue(smo instanceof SMOPartitionTable);
+    assertTrue(((SMOPartitionTable)smo).getTables().get(0).equals("table"));
+    assertTrue(((SMOPartitionTable)smo).getViews().get(0).equals("table1"));
+    assertTrue(((SMOPartitionTable)smo).getViews().get(1).equals("table2"));
+   
+    assertTrue(((SMOPartitionTable)smo).getCond().equals("table.col1='OLD'"));
     
+    String testJoinTable = "JOIN TABLE table1, table2 INTO table WHERE table1.col1 = table2.col2;";
+    smo = SMOFactory.getSMO(testJoinTable);
+    assertTrue(smo instanceof SMOJoinTable);
+    assertTrue(((SMOJoinTable)smo).getTables().get(0).equals("table1"));
+    assertTrue(((SMOJoinTable)smo).getTables().get(1).equals("table2"));
+    assertTrue(((SMOJoinTable)smo).getViews().get(0).equals("table"));
+    
+    assertTrue(((SMOJoinTable)smo).getCond().equals("table1.col1=table2.col2"));
     //assertTrue(false);
     
     

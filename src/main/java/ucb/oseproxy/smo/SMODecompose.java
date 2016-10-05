@@ -246,20 +246,6 @@ public class SMODecompose extends SMOAbstractCommand {
 
     return sb.toString();
   }
-  
-  protected void dropTriggers() throws SQLException {
-    String[] ops = {"INSERT", "UPDATE", "DELETE"};
-    Statement stmt = conn.createStatement();
-    for (String tablename : this.getTables()) {
-      for (String op : ops) {
-        String triggerFunc = tablename + "_" + op + "_func";
-        String triggerName = getTriggerName(tablename, triggerFunc);
-        String query = "DROP TRIGGER IF EXISTS " + triggerName + " on " + tablename + ";";
-        logger.info(query);
-        stmt.executeUpdate(query);
-      }
-    }
-  }
 
   
   

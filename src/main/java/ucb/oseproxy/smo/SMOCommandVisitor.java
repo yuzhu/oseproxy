@@ -31,6 +31,18 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
     return cmd;
   }
   
+  public SMOCommand visitPartitiontable(SMOParser.PartitiontableContext ctx){
+    SMOCommand cmd = new SMOPartitionTable(ctx.ID(0).getText(), ctx.ID(1).getText(), 
+        ctx.ID(2).getText(), ctx.swallow_to_semi().getText());
+    return cmd;
+  }
+  
+  public SMOCommand visitJointable(SMOParser.JointableContext ctx){
+    SMOCommand cmd = new SMOJoinTable(ctx.ID(0).getText(),ctx.ID(1).getText(), 
+        ctx.ID(2).getText(),ctx.swallow_to_semi().getText());
+    return cmd;
+  }
+  
   public SMOCommand visitMergetable(SMOParser.MergetableContext ctx) {
     List<String> strings = ctx.ID().stream()
         .map(object -> object.getText())

@@ -47,6 +47,14 @@ public class SMOPartitionTable extends SMOAbstractCommand {
   }
   
 
+  public String getCond() {
+    return cond;
+  }
+
+  public void setCond(String cond) {
+    this.cond = cond;
+  }
+
   @Override
   protected void createViews(Statement stmt) throws SQLException {
     String viewString = "CREATE MATERIALIZED VIEW %s AS select * FROM %s where %s;";
@@ -59,22 +67,6 @@ public class SMOPartitionTable extends SMOAbstractCommand {
     stmt.addBatch(view2);
     
     logger.info("views created");
-
-  }
-
-  @Override
-  protected void dropTriggers() throws SQLException {
-    String[] ops = {"INSERT", "UPDATE", "DELETE"};
-    Statement stmt = conn.createStatement();
-    for (String tablename : this.getTables()) {
-      for (String op : ops) {
-        String triggerFunc = tablename + "_" + op + "_func";
-        String triggerName = getTriggerName(tablename, triggerFunc);
-        String query = "DROP TRIGGER IF EXISTS " + triggerName + " on " + tablename + ";";
-        logger.info(query);
-        stmt.executeUpdate(query);
-      }
-    }
 
   }
 
