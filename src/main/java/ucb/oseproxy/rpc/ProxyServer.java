@@ -131,7 +131,7 @@ public class ProxyServer {
 
     @Override
     public void execQuery(QueryRequest req, StreamObserver<QueryReply> responseObserver) {
-      logger.info("Executing query on behalf of " + req.getConnId() + "  " + req.getQuery());
+      //logger.info("Executing query on behalf of " + req.getConnId() + "  " + req.getQuery());
       String resultset = OSEServer.getInstance().execQuery(req.getConnId(), req.getQuery());
       ResultSet rs = OSEServer.getInstance().getResultSet(resultset);
       QueryReply reply = null;
@@ -176,7 +176,6 @@ public class ProxyServer {
 
     @Override
     public void readRow(RowRequest req, StreamObserver<RowReply> responseObserver) {
-      logger.info("read row called");
       Map<String, Object> row = OSEServer.getInstance().getNextRow(req.getResultSetId());
       RowReply reply = null;
       if (row == null) {
@@ -205,7 +204,7 @@ public class ProxyServer {
     
     @Override
     public void execSMO(SMORequest req, StreamObserver<SMOReply> responseObserver) {
-      logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getCmd());
+      //logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getCmd());
       SMOReply reply = null;
       String smoid = OSEServer.getInstance().execSMO(req.getConnId(), Command.values()[req.getCmd()], req.getArgList());
       reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();
@@ -215,7 +214,7 @@ public class ProxyServer {
     
     @Override
     public void execSMOString(SMOStringRequest req, StreamObserver<SMOReply> responseObserver) {
-      logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getSmoCmd());
+      // logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getSmoCmd());
       SMOReply reply = null;
       String smoid = OSEServer.getInstance().execSMOString(req.getConnId(), req.getSmoCmd());
       reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();

@@ -144,9 +144,10 @@ public class ProxyClient {
       logger.info("Connection id " + connId);
       int querycount = 0;
       long start_time = System.nanoTime();
-      for ( int i=1; i < 79619; i++) {
+      for ( int i=1; i < 2000; i++) {
        ResultSet rs = client.execQuery(connId, "select * from persons where personid="+ i);
        rs.next();
+       if (i%100 == 0) logger.info("i is " + i);
        querycount++;
       }
       long end_time = System.nanoTime();
