@@ -1,5 +1,9 @@
 package ucb.oseproxy.rpc;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.smo.SMOCommand.Command;
@@ -25,9 +29,13 @@ public class SMOThread extends ClientThread {
         //String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
         // Issue SMO
         //client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
-        String opt[] = {"largeppl", "persons", "combineppl"};
-        client.issueSMO(connId, Command.MERGE_TABLE, opt);
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String cmd = br.readLine();
+        client.issueSMOString(connId, cmd);
          
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
       } finally {
         client.shutdown();
       }

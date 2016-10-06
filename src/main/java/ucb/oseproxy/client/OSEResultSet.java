@@ -56,7 +56,7 @@ public class OSEResultSet implements ResultSet {
   }
   
   public boolean loadNextRow() {
-    logger.info("Reading a row from the resultSet");
+    // logger.info("Reading a row from the resultSet");
     RowRequest request = RowRequest.newBuilder().setResultSetId(id).build();
     RowReply response;
     rowMap.clear();

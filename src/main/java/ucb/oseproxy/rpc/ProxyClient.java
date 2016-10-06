@@ -70,7 +70,7 @@ public class ProxyClient {
   
 
   public ResultSet execQuery(String connId, String query) {
-    logger.info("Running query on connection " + connId + " query : " + query);
+    // logger.info("Running query on connection " + connId + " query : " + query);
     QueryRequest request = QueryRequest.newBuilder().setConnId(connId).setQuery(query).build();
     QueryReply response;
     try {
@@ -142,13 +142,21 @@ public class ProxyClient {
     try {
       String connId = client.connect(dbURL, dbPort, dbname, username, password);
       logger.info("Connection id " + connId);
-       ResultSet rs = client.execQuery(connId, "select * from persons");
+      int querycount = 0;
+      long start_time = System.nanoTime();
+      for ( int i=1; i < 79619; i++) {
+       ResultSet rs = client.execQuery(connId, "select * from persons where personid="+ i);
        rs.next();
+       querycount++;
+      }
+      long end_time = System.nanoTime();
+      double qps = querycount/ ((end_time - start_time)/1e9);
+      System.out.println("Query per second" + qps);
       schanger.start();
       
       /// while inserting large number of values into a table, we migrate 
       for (int i=10030000; i <10031000; i++) {
-        client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'David', 'Milvia', 'Berkeley')");
+        //client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'David', 'Milvia', 'Berkeley')");
         //client.execUpdate(connId, "insert into OSE_VIEW1_largeppl values(" + i*2 + ", 'Brewer', 'Eric')");
       }
       
