@@ -61,7 +61,6 @@ public class DynamicSchema {
   }
   public Descriptors.Descriptor getDescriptor() {
     DescriptorProtos.DescriptorProto descp = this.getDescProto();
-    System.out.println (descp.toString());
     return DynamicSchema.getDesc(descp);
   }
   
