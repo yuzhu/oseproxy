@@ -44,11 +44,8 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   }
   
   public SMOCommand visitMergetable(SMOParser.MergetableContext ctx) {
-    List<String> strings = ctx.ID().stream()
-        .map(object -> object.getText())
-        .collect(Collectors.toList());
     
-    return new SMOMerge(strings);
+    return new SMOMerge(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText());
   }
   
   public SMOCommand visitDecomposetable(SMOParser.DecomposetableContext ctx){

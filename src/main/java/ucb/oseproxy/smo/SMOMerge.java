@@ -39,6 +39,11 @@ public class SMOMerge extends SMOAbstractCommand {
     }
   }
 
+  public SMOMerge(String r, String s, String t) {
+    this.cmd = Command.MERGE_TABLE;
+    init(r,s,t);
+  }
+  
   public SMOMerge(List<String> options) {
     this.cmd = Command.MERGE_TABLE;
     if (options.size() != 3) {
