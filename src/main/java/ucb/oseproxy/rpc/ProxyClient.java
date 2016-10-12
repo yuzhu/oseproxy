@@ -4,6 +4,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import ucb.oseproxy.client.OSEResultSet;
+import ucb.oseproxy.measure.MonitorTask;
 import ucb.oseproxy.smo.SMOCommand.Command;
 import ucb.oseproxy.util.ProxyUtil;
 
@@ -142,12 +143,14 @@ public class ProxyClient {
     try {
       String connId = client.connect(dbURL, dbPort, dbname, username, password);
       logger.info("Connection id " + connId);
+      MonitorTask mt = new MonitorTask(1);
       int querycount = 0;
       long start_time = System.nanoTime();
       for ( int i=1; i < 2000; i++) {
        ResultSet rs = client.execQuery(connId, "select * from persons where personid="+ i);
        rs.next();
        if (i%100 == 0) logger.info("i is " + i);
+       mt.add();  
        querycount++;
       }
       long end_time = System.nanoTime();
