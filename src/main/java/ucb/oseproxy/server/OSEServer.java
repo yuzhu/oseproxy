@@ -53,10 +53,12 @@ public class OSEServer {
       String uuid = ProxyUtil.randomId();
       connMap.put(uuid, conn);
       // Perform initialization of the connection for SMOs
-      Statement stmt = conn.createStatement();
+      // Statement stmt = conn.createStatement();
       //stmt.executeUpdate("CREATE LANGUAGE plperl;");
-      stmt.executeUpdate("CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$ if ($_SHARED{$_[0]} = $_[1]) {return 'ok';} else { return \"can't set shared variable $_[0] to $_[1]\";}$$ LANGUAGE plperl;");
-      stmt.executeUpdate("CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$return $_SHARED{$_[0]};$$ LANGUAGE plperl;");
+      
+      // TODO: Solve concurrent update issue 
+      // stmt.executeUpdate("CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$ if ($_SHARED{$_[0]} = $_[1]) {return 'ok';} else { return \"can't set shared variable $_[0] to $_[1]\";}$$ LANGUAGE plperl;");
+      // stmt.executeUpdate("CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$return $_SHARED{$_[0]};$$ LANGUAGE plperl;");
       
       return uuid;
     } catch (SQLException se) {

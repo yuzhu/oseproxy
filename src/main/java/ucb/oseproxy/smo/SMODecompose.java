@@ -10,14 +10,13 @@ import java.util.logging.Logger;
 
 public class SMODecompose extends SMOAbstractCommand {
   private String table, tablecolumns, view1columns, view2columns;
-  private List<String> views;
   
   private static Logger logger = Logger.getLogger(SMODecompose.class.getName());
   public SMODecompose(){
     this.cmd = Command.DECOMPOSE_TABLE;
   }
   public SMODecompose(List<String> args) {
-    if (args.size() != 4 || args.size() != 6) {
+    if (args.size() != 4 && args.size() != 6) {
       logger.warning("Number of options not valid for DECOMPOSE_TABLE");
     }
     table = args.get(0);
@@ -58,7 +57,7 @@ public class SMODecompose extends SMOAbstractCommand {
   }
   
   private String getViewName(int index) {
-    return views.get(index);
+    return views.get(index-1);
   }
 
   protected void createViews(Statement stmt) throws SQLException {

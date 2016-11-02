@@ -26,14 +26,16 @@ public class SMOThread extends ClientThread {
         String connId = client.connect(dbURL, dbPort, dbname, username, password);
         logger.info("Thread " + name + " Connection id " + connId);
          
-        //String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
+        String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
         // Issue SMO
-        //client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String cmd = br.readLine();
-        client.issueSMOString(connId, cmd);
+        System.out.println("smo started");
+        client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        System.out.println("smo finished");
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //String cmd = br.readLine();
+        //client.issueSMOString(connId, cmd);
          
-      } catch (IOException e) {
+      } catch (Exception e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       } finally {

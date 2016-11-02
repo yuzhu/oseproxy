@@ -137,41 +137,21 @@ public class ProxyClient {
       password = args[4];
     }
     
+    
+    BackgroundThread background  = new BackgroundThread(dbURL, dbPort, dbname, username, password);
+    
+    
     ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password);
     
     ProxyClient client = new ProxyClient("localhost", 50051);
-    try {
-      String connId = client.connect(dbURL, dbPort, dbname, username, password);
-      logger.info("Connection id " + connId);
-      MonitorTask mt = new MonitorTask(1);
-      int querycount = 0;
-      long start_time = System.nanoTime();
-      for ( int i=1; i < 2000; i++) {
-       ResultSet rs = client.execQuery(connId, "select * from persons where personid="+ i);
-       rs.next();
-       if (i%100 == 0) logger.info("i is " + i);
-       mt.add();  
-       querycount++;
-      }
-      long end_time = System.nanoTime();
-      double qps = querycount/ ((end_time - start_time)/1e9);
-      System.out.println("Query per second" + qps);
-      schanger.start();
-      
-      /// while inserting large number of values into a table, we migrate 
-      for (int i=10030000; i <10031000; i++) {
-        //client.execUpdate(connId, "insert into largeppl values(" + i + ", 'Zhu', 'David', 'Milvia', 'Berkeley')");
-        //client.execUpdate(connId, "insert into OSE_VIEW1_largeppl values(" + i*2 + ", 'Brewer', 'Eric')");
-      }
-      
-    } catch (SQLException e) {
-      logger.warning(e.getMessage());
-    } finally {
-      client.shutdown();
-    }
+    background.start();
+    Thread.sleep(1000);
+    schanger.start();
+   
     System.out.println("Press enter to commit");
     System.in.read();
     schanger.join();
+    background.join(5000);
     logger.info("All threads finished");
   }
 
