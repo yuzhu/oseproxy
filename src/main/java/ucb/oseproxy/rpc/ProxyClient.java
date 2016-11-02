@@ -145,7 +145,7 @@ public class ProxyClient {
     
     ProxyClient client = new ProxyClient("localhost", 50051);
     background.start();
-    Thread.sleep(1000);
+    Thread.sleep(10000);
     schanger.start();
    
     System.out.println("Press enter to commit");
