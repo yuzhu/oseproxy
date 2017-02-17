@@ -127,6 +127,7 @@ public class ProxyClient {
     String dbname = "";
     String username = "";
     String password = "";
+    String inputfile = "commands";
     if (args.length != 5) {
       logger.info("Using some default values for parameters");
     } else {
@@ -141,14 +142,12 @@ public class ProxyClient {
     BackgroundThread background  = new BackgroundThread(dbURL, dbPort, dbname, username, password);
     
     
-    ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password);
+    ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password, inputfile);
     
     ProxyClient client = new ProxyClient("localhost", 50051);
     background.start();
     Thread.sleep(10000);
     schanger.start();
-   
-    System.out.println("Press enter to commit");
     System.in.read();
     schanger.join();
     background.join(5000);

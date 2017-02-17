@@ -17,4 +17,7 @@ public interface SMOCommand {
   public boolean commitSMO();
   
   public boolean rollbackSMO();
+  
+  public boolean isReversible();
+  
 }

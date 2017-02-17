@@ -20,5 +20,9 @@ public abstract class SMOSimpleCommand implements SMOCommand {
 
   public boolean commitSMO() {return false;}
   public boolean rollbackSMO() {return false;}
+  @Override
+  public boolean isReversible() {
+    return true;
+  } 
 
 }

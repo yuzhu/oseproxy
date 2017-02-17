@@ -26,6 +26,9 @@ public class SMOJoinTable extends SMOAbstractCommand {
     tables.add(r);
     tables.add(s);
     views.add(t);
+    this.r = r;
+    this.s = s;
+    this.t = t;
     this.cond = joincond;
   }
   
@@ -103,7 +106,7 @@ public class SMOJoinTable extends SMOAbstractCommand {
         sb.append(view);
         
         sb.append(" WITH temptable AS ");
-        sb.append(" SELECT NEW.*" );
+        sb.append(" (SELECT NEW.*)" );
         
         // With temtable as values(NEW.COL1, NEW.COL2, ...  )
         sb.append(" SELECT * FROM ");
@@ -118,6 +121,7 @@ public class SMOJoinTable extends SMOAbstractCommand {
         }
         sb.append(" WHERE ");
         sb.append(cond.replaceAll(currtable, "temptable"));
+        sb.append(" ;");
         break;
       case "DELETE":
           // delete from view where view.col = old.col
@@ -156,7 +160,7 @@ public class SMOJoinTable extends SMOAbstractCommand {
         sb.append(view);
         
         sb.append(" WITH temptable AS ");
-        sb.append(" SELECT NEW.*" );
+        sb.append(" (SELECT NEW.*)" );
         
         // With temtable as values(NEW.COL1, NEW.COL2, ...  )
         sb.append(" SELECT * FROM ");
@@ -171,11 +175,12 @@ public class SMOJoinTable extends SMOAbstractCommand {
         }
         sb.append(" WHERE ");
         sb.append(cond.replaceAll(currtable, "temptable"));
+        sb.append(" ;");
         break;
      
     }
     // TODO Auto-generated method stub
-    return null;
+    return sb.toString();
   }
 
   @Override

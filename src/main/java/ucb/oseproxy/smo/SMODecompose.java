@@ -286,5 +286,28 @@ public class SMODecompose extends SMOAbstractCommand {
     
  
   }
+  @Override
+  public boolean commitSMO() {
+    
+    return true;
+  }
+  @Override
+  public boolean rollbackSMO() {
+    Statement stmt;
+    try {
+      stmt = conn.createStatement();
+      dropViews(stmt);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return true;
+  }
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return true;
+  }
 
 }

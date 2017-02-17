@@ -40,4 +40,33 @@ public class SMORenameTable extends SMOSimpleCommand {
 
   }
 
+  @Override
+  public boolean commitSMO() {
+    // TODO Auto-generated method stub
+    return true;
+  }
+
+  @Override
+  public boolean rollbackSMO() {
+    // TODO Auto-generated method stub
+    String alterTableString = "ALTER TABLE %s RENAME TO %s;";
+    String cmdString = String.format(alterTableString, toName, fromName);
+    try {
+      Statement stmt = conn.createStatement(); 
+      stmt.executeUpdate( (cmdString));
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return true;
+  }
+
+  
 }

@@ -252,7 +252,6 @@ public class SMOPartitionTable extends SMOAbstractCommand {
           genReverseFuncBody("UPDATE", view, tables));
       attachTriggers(stmt, view, insertFunc, updateFunc, deleteFunc);
     }
-
   }
 
   private String genReverseFuncBody(String op, String view, List<String> tables) {
@@ -261,7 +260,7 @@ public class SMOPartitionTable extends SMOAbstractCommand {
     String newcond = cond.replaceAll(table, "NEW");
     String oldcond = cond.replaceAll(table, "OLD");
     
-    switch (op) {
+    switch (op) { // Insert into the original table before partition
       case "INSERT":
         sb.append("INSERT INTO ");
         sb.append(table);
@@ -275,7 +274,7 @@ public class SMOPartitionTable extends SMOAbstractCommand {
         sb.append(");");
         
         break;
-      case "DELETE":
+      case "DELETE": // Delete from original table before partition
         sb.append("DELETE FROM ");
         sb.append(table);
         sb.append(" WHERE ");
@@ -319,5 +318,35 @@ public class SMOPartitionTable extends SMOAbstractCommand {
     }
     return sb.toString();
   }
+  
+  @Override
+  public boolean commitSMO() {
+    // TODO Auto-generated method stub
+    return true;
+  }
 
+  
+  /*  
+   * rollback a merge means to drop the view created, 
+   * since there is back propagation, this rollback should be successful.
+   */
+  @Override
+  public boolean rollbackSMO() {
+    Statement stmt;
+    try {
+      stmt = conn.createStatement();
+      dropViews(stmt);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return true;
+  }
+
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return true;
+  }
 }

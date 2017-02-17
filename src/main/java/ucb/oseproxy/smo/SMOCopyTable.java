@@ -39,4 +39,33 @@ public class SMOCopyTable extends SMOSimpleCommand {
     }
   }
 
+  @Override
+  public boolean commitSMO() {
+    // TODO Auto-generated method stub
+    return super.commitSMO();
+  }
+
+  @Override
+  public boolean rollbackSMO() {
+    // TODO Auto-generated method stub
+    String dropTableString = "DROP TABLE %s;";
+    String cmdString = String.format(dropTableString, this.toName);
+    try {
+      Statement stmt = conn.createStatement(); 
+      stmt.executeUpdate( (cmdString));
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return true;
+  }
+  
+  
+
 }

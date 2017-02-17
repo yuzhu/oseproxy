@@ -104,7 +104,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     sb.deleteCharAt(sb.length()-1);
     sb.append(";");
     logger.info("Deleting views: " + sb.toString());
-    stmt.addBatch(sb.toString());
+    stmt.execute(sb.toString());
   }
   protected abstract void createViews(Statement stmt) throws SQLException;
   protected void dropTriggers() throws SQLException {
@@ -187,4 +187,10 @@ public abstract class SMOAbstractCommand implements SMOCommand {
   @Override
   public boolean commitSMO() {return false;}
   public boolean rollbackSMO() {return false;}
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+  
 }

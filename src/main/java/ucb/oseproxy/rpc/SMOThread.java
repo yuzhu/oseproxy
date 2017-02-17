@@ -1,17 +1,33 @@
 package ucb.oseproxy.rpc;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Scanner;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.smo.SMOCommand.Command;
 
 public class SMOThread extends ClientThread {
-
-  public SMOThread(String s1, int i1, String s2, String s3, String s4) {
+  private InputStream cmds;
+  private BufferedReader reader;
+  
+  public SMOThread(String s1, int i1, String s2, String s3, String s4){
     super(s1, i1, s2, s3, s4);
+    cmds = System.in;
+    reader = new BufferedReader(new InputStreamReader(cmds));
+    // TODO Auto-generated constructor stub
+  }
+  
+  public SMOThread(String s1, int i1, String s2, String s3, String s4, String filename) throws FileNotFoundException {
+    super(s1, i1, s2, s3, s4);
+    cmds = new FileInputStream(new File(filename));
+    reader = new BufferedReader(new InputStreamReader(cmds));
     // TODO Auto-generated constructor stub
   }
 
@@ -28,11 +44,18 @@ public class SMOThread extends ClientThread {
          
         String opt[] = {"largeppl", "personid", "lastname,firstname", "address,city"};
         // Issue SMO
-        System.out.println("smo started");
-        client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
-        System.out.println("smo finished");
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        //String cmd = br.readLine();
+        // client.issueSMO(connId, Command.DECOMPOSE_TABLE, opt);
+        //String cmd = "JOIN TABLE persons, calllog INTO calllogwithcity WHERE persons.personid=calllog.from_id;";
+        // client.issueSMOString(connId, cmd);
+        // String cmd2 = "JOIN TABLE persons, calllogwithcity INTO calllogwithcity2 WHERE persons.personid=calllogwithcity.to_id;";
+        
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+          System.out.println("command is " + line);
+          System.out.println("smo started");
+          client.issueSMOString(connId, line);
+          System.out.println("smo finished");
+        }
+
         //client.issueSMOString(connId, cmd);
          
       } catch (Exception e) {

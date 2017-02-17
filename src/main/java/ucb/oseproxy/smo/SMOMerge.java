@@ -9,6 +9,10 @@ import java.util.logging.Logger;
 
 
 // MERGE TABLE (R,S) INTO T, assuming R, S has the same structure
+/**
+ * @author yuzhu
+ *
+ */
 public class SMOMerge extends SMOAbstractCommand {
 
   private static Logger logger = Logger.getLogger(SMOAbstractCommand.class.getName());
@@ -47,7 +51,7 @@ public class SMOMerge extends SMOAbstractCommand {
   public SMOMerge(List<String> options) {
     this.cmd = Command.MERGE_TABLE;
     if (options.size() != 3) {
-      logger.warning("Number of options not valid for DECOMPOSE_TABLE");
+      logger.warning("Number of options not valid for MERGE_TABLE");
     }
     init(options.get(0), options.get(1),options.get(2));
   }
@@ -166,7 +170,7 @@ public class SMOMerge extends SMOAbstractCommand {
   private String genReverseFuncBody(String operation, String view, List<String> tables) {
     StringBuilder sb = new StringBuilder();
     switch (operation) {
-      case "INSERT":
+      case "INSERT": // Insert into the first table
         sb.append("INSERT INTO ");
         sb.append(tables.get(0));
         sb.append(" VALUES (");
@@ -179,7 +183,7 @@ public class SMOMerge extends SMOAbstractCommand {
         sb.append(");");
 
         break;
-      case "UPDATE":
+      case "UPDATE":  // Update both tables to see if there is an entry matching criteria.
         for (String table: tables){
           sb.append("UPDATE ");
           sb.append(table);
@@ -203,7 +207,7 @@ public class SMOMerge extends SMOAbstractCommand {
           sb.append(";");
         }
         break;
-      case "DELETE":
+      case "DELETE": //Delete from both tables 
         for (String table: tables){
           sb.append("DELETE FROM ");
           sb.append(table);
@@ -225,4 +229,36 @@ public class SMOMerge extends SMOAbstractCommand {
     }
     return sb.toString();
   }
+
+  @Override
+  public boolean commitSMO() {
+    // TODO Auto-generated method stub
+    return true;
+  }
+
+  
+  /*  
+   * rollback a merge means to drop the view created, 
+   * since there is back propagation, this rollback should be successful.
+   */
+  @Override
+  public boolean rollbackSMO() {
+    Statement stmt;
+    try {
+      stmt = conn.createStatement();
+      dropViews(stmt);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return true;
+  }
+
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return true;
+  }
 }
+  
