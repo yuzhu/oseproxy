@@ -55,6 +55,19 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
         );
   }
   
+  public SMOCommand visitAddColumn(SMOParser.AddcolumnContext ctx) {
+   
+    return new SMOAddColumn(ctx.ID(0).getText(), ctx.expr().getText(), ctx.ID(1).getText());
+  }
+  
+  public SMOCommand visitDropColumn(SMOParser.DropcolumnContext ctx) {
+    return null;
+  }
+  
+  public SMOCommand visitRenameColumn(SMOParser.RenamecolumnContext ctx) {
+    return null;
+  }
+  
  
   public static void main(String[] args) {
     // TODO Auto-generated method stub

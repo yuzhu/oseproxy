@@ -183,10 +183,43 @@ public class SMOJoinTable extends SMOAbstractCommand {
     return sb.toString();
   }
 
+  /* Notice we do not have reverse triggers here*/ 
   @Override
   protected void createReverseTriggers(Statement stmt) throws SQLException {
     // TODO Auto-generated method stub
 
+  }
+  
+  @Override
+  public boolean commitSMO() {
+    // TODO Auto-generated method stub
+    return true;
+  }
+
+  
+  /*  
+   * rollback a join means to drop the view created.
+   * Rollback would only be partially successful because there is no 
+   * back-propagation. 
+   */
+  @Override
+  public boolean rollbackSMO() {
+    Statement stmt;
+    try {
+      stmt = conn.createStatement();
+      dropViews(stmt);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return true;
+  }
+
+  @Override
+  public boolean isReversible() {
+    // TODO Auto-generated method stub
+    return false;
   }
 
 }
