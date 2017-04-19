@@ -61,8 +61,10 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   }
   
   public SMOCommand visitDropColumn(SMOParser.DropcolumnContext ctx) {
-    return null;
+    return new SMODropColumn(ctx.ID(0).getText(), ctx.ID(1).getText());
   }
+  
+  
   
   public SMOCommand visitRenameColumn(SMOParser.RenamecolumnContext ctx) {
     return null;

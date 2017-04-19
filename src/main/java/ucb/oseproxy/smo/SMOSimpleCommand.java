@@ -22,7 +22,8 @@ public abstract class SMOSimpleCommand implements SMOCommand {
   public boolean rollbackSMO() {return false;}
   @Override
   public boolean isReversible() {
-    return true;
+    //default not reversible, override if reversible
+    return false;
   } 
 
 }
