@@ -67,7 +67,7 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   
   
   public SMOCommand visitRenameColumn(SMOParser.RenamecolumnContext ctx) {
-    return null;
+    return new SMORenameColumn(ctx.ID(0).getText(), ctx.ID(2).getText(), ctx.ID(1).getText());
   }
   
  

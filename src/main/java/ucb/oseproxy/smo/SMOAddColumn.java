@@ -40,8 +40,19 @@ public class SMOAddColumn extends SMOSimpleCommand {
 
   @Override
   public void executeSMO() {
-    String alterTableString = "ALTER TABLE %s ADD COLUMN %s %s;";
-    String cmdString = String.format(alterTableString, this.tableName, this.columnName, this.expr);
+    String alterTableString;
+    String cmdString;
+    if (expr.isEmpty()){
+      alterTableString = "ALTER TABLE %s ADD COLUMN %s VARCHAR(30);";
+      cmdString = String.format(alterTableString, this.tableName, this.columnName);
+    } else if(expr.equals("auto_increment()")){
+      alterTableString = "ALTER TABLE %s ADD COLUMN %s SERIAL;";
+      cmdString = String.format(alterTableString, this.tableName, this.columnName, this.expr);
+    } else {
+      alterTableString = "ALTER TABLE %s ADD COLUMN %s VARCHAR(30) SET DEFAULT %s;";
+      cmdString = String.format(alterTableString, this.tableName, this.columnName, this.expr);
+    }
+    
     try {
       Statement stmt = conn.createStatement(); 
       stmt.executeUpdate((cmdString));
