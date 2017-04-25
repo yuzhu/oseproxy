@@ -70,6 +70,10 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
     return new SMORenameColumn(ctx.ID(0).getText(), ctx.ID(2).getText(), ctx.ID(1).getText());
   }
   
+  public SMOCommand visitCopyColumn(SMOParser.CopycolumnContext ctx) {
+    return new SMOCopyColumn(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText(),ctx.swallow_to_semi().getText() );
+    
+  }
  
   public static void main(String[] args) {
     // TODO Auto-generated method stub
