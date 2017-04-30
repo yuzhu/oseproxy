@@ -139,18 +139,18 @@ public class ProxyClient {
     }
     
     
-    BackgroundThread background  = new BackgroundThread(dbURL, dbPort, dbname, username, password);
+    // BackgroundThread background  = new BackgroundThread(dbURL, dbPort, dbname, username, password);
     
     
-    ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password, inputfile);
+    ClientThread schanger = new SMOThread(dbURL, dbPort, dbname, username, password);
     
     ProxyClient client = new ProxyClient("localhost", 50051);
-    background.start();
+    // background.start();
     Thread.sleep(10000);
     schanger.start();
-    System.in.read();
+    //System.in.read();
     schanger.join();
-    background.join(5000);
+    // background.join(5000);
     logger.info("All threads finished");
   }
 

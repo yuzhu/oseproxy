@@ -5,9 +5,11 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import ucb.oseproxy.smo.SMOCommand.Command;
 import ucb.oseproxy.smo.SMOParser;
+import ucb.oseproxy.rpc.ProxyServer;
 import ucb.oseproxy.smo.SMOLexer;
 
 import org.antlr.v4.runtime.*; 
@@ -16,7 +18,7 @@ import org.antlr.v4.runtime.tree.*;
 
 
 public class SMOFactory {
-  
+  private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
   public static SMOCommand getSMO(String cmdLine) {
     ANTLRInputStream input = new ANTLRInputStream(cmdLine);
     SMOLexer lexer = new SMOLexer(input);
@@ -25,6 +27,10 @@ public class SMOFactory {
     ParseTree tree = parser.smo_statement_plus_semi();
     ParseTreeVisitor<SMOCommand> ptv = new SMOCommandVisitor();
     SMOCommand cmd = ptv.visit(tree);
+    if (cmd == null){
+      logger.warning("Parsing resulted in empty object");
+      logger.warning("was trying to parse " + cmdLine);
+    }
     return cmd;
   }
   

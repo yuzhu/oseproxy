@@ -45,10 +45,26 @@ public class SMOCreateTable extends SMOSimpleCommand {
     }
     return sb.toString();
   }
+  
+  private String typedCollist() {
+    if (columnList.size() == 0)
+      return "";
+    StringBuffer sb = new StringBuffer();
+    for (String col : columnList) {
+      sb.append(col);
+      sb.append(" VARCHAR(30)");
+      sb.append(",");
+    }
+    
+    if (columnList.size() >= 1) {
+      sb.deleteCharAt(sb.length() - 1);
+    }
+    return sb.toString();
+  }
   @Override
   public void executeSMO() {
-    String createTableString = "CREATE TABLE %s(%s);";
-    String cmdString = String.format(createTableString, tableName, collist());
+    String createTableString = "CREATE TABLE %s (%s);";
+    String cmdString = String.format(createTableString, tableName, typedCollist());
     try {
       Statement stmt = conn.createStatement(); 
       stmt.executeUpdate( (cmdString));

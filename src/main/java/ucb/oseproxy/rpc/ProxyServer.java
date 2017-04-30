@@ -214,7 +214,7 @@ public class ProxyServer {
     
     @Override
     public void execSMOString(SMOStringRequest req, StreamObserver<SMOReply> responseObserver) {
-      // logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getSmoCmd());
+      logger.info("Executing query on behalf of " + req.getConnId() + "cmd: " + req.getSmoCmd());
       SMOReply reply = null;
       String smoid = OSEServer.getInstance().execSMOString(req.getConnId(), req.getSmoCmd());
       reply = SMOReply.newBuilder().setStatus(0).setSmoId(smoid).build();
@@ -222,6 +222,25 @@ public class ProxyServer {
       responseObserver.onCompleted();
     }
     
+    @Override
+    public void commitStack(StackRequest req, StreamObserver<OKReply> responseObserver) {
+      logger.info("Committing stack on behalf of " + req.getConnId());
+      OKReply reply = null;
+      boolean ok = OSEServer.getInstance().commitStack(req.getConnId());
+      reply = OKReply.newBuilder().setStatus(ok).build();
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+    }
+    
+    @Override
+    public void rollbackStack(StackRequest req, StreamObserver<OKReply> responseObserver) {
+      logger.info("Rollback stack on behalf of " + req.getConnId());
+      OKReply reply = null;
+      boolean ok = OSEServer.getInstance().rollbackStack(req.getConnId());
+      reply = OKReply.newBuilder().setStatus(ok).build();
+      responseObserver.onNext(reply);
+      responseObserver.onCompleted();
+    }
     
   }
 }

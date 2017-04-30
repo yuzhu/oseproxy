@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.rpc.ProxyServer;
@@ -23,6 +24,8 @@ public class OSEServer {
   private HashMap<String, ResultSet> rsMap;
   // map a db to a SMO
   private HashMap<String, SMOCommand> smoMap; 
+  
+  private HashMap<String, Stack<SMOCommand>> smoStackMap;
 
   public static OSEServer getInstance() {
     if (instance == null)
@@ -34,6 +37,7 @@ public class OSEServer {
     connMap = new HashMap<String, Connection>();
     rsMap = new HashMap<String, ResultSet>();
     smoMap = new HashMap<String, SMOCommand>();
+    smoStackMap = new HashMap<String, Stack<SMOCommand>>();
     // STEP 2: Register JDBC driver
     try {
       Class.forName(JDBC_DRIVER);
@@ -52,6 +56,9 @@ public class OSEServer {
       Connection conn = DriverManager.getConnection(db_url, username, password);
       String uuid = ProxyUtil.randomId();
       connMap.put(uuid, conn);
+      Stack<SMOCommand> newstack = new Stack<SMOCommand>();
+      smoStackMap.put(uuid, newstack);
+      
       // Perform initialization of the connection for SMOs
       // Statement stmt = conn.createStatement();
       //stmt.executeUpdate("CREATE LANGUAGE plperl;");
@@ -116,13 +123,37 @@ public class OSEServer {
       SMOCommand smo = SMOFactory.getSMO(smoString);
       smo.connect(conn);
       
+      Stack<SMOCommand> stack = this.smoStackMap.get(connId);
+      stack.push(smo);
+      
       smoMap.put(uuid, smo);
       smo.executeSMO(); 
+      // XXX: Auto-Commit 
+      smo.commitSMO();
       return uuid;
     } catch (SQLException e) {
       e.printStackTrace();
       return null;
     }
+  }
+  
+  public boolean commitStack(String connId) {
+    Stack<SMOCommand> stack = this.smoStackMap.get(connId);
+    for(SMOCommand cmd : stack) {
+      cmd.commitSMO();
+    }
+    return true;
+  }
+  
+  public boolean rollbackStack(String connId) {
+    boolean result = true;
+    Stack<SMOCommand> stack = this.smoStackMap.get(connId);
+    while (!stack.isEmpty()) {
+      SMOCommand cmd = stack.pop();
+      if (!cmd.rollbackSMO())
+        result = false;
+    }
+    return result;
   }
   
   public String execSMO(String connId, Command cmd, List<String> options ) {
@@ -133,6 +164,9 @@ public class OSEServer {
       logger.info("execSMO dbURL" + dbURL);
       String uuid = ProxyUtil.randomId();
       SMOCommand smo = SMOFactory.getSMO(conn, cmd, options);
+      
+      Stack<SMOCommand> stack = this.smoStackMap.get(connId);
+      stack.push(smo);
       
       smoMap.put(uuid, smo);
       smo.executeSMO(); 

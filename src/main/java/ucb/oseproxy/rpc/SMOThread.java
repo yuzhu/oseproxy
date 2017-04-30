@@ -52,8 +52,12 @@ public class SMOThread extends ClientThread {
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
           System.out.println("command is " + line);
           System.out.println("smo started");
-          client.issueSMOString(connId, line);
+          
+          if (!(line.trim().isEmpty() || line.trim().equalsIgnoreCase(("NOP;"))))
+            client.issueSMOString(connId, line);
           System.out.println("smo finished");
+          
+          Thread.sleep(300);
         }
 
         //client.issueSMOString(connId, cmd);

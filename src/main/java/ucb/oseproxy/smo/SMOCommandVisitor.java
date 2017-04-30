@@ -16,6 +16,8 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   }
   
   public SMOCommand visitCreatetable(SMOParser.CreatetableContext ctx){
+    if (ctx.bracketlist() == null || ctx.bracketlist().columnlist() == null)
+      return new SMOCreateTable(ctx.ID().getText(), "");
     SMOCommand cmd = new SMOCreateTable(ctx.ID().getText(), ctx.bracketlist().columnlist().getText());
     return cmd;
   }
@@ -55,24 +57,32 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
         );
   }
   
-  public SMOCommand visitAddColumn(SMOParser.AddcolumnContext ctx) {
-   
+  public SMOCommand visitAddcolumn(SMOParser.AddcolumnContext ctx) {
     return new SMOAddColumn(ctx.ID(0).getText(), ctx.expr().getText(), ctx.ID(1).getText());
   }
   
-  public SMOCommand visitDropColumn(SMOParser.DropcolumnContext ctx) {
+  public SMOCommand visitDropcolumn(SMOParser.DropcolumnContext ctx) {
     return new SMODropColumn(ctx.ID(0).getText(), ctx.ID(1).getText());
   }
   
   
   
-  public SMOCommand visitRenameColumn(SMOParser.RenamecolumnContext ctx) {
+  public SMOCommand visitRenamecolumn(SMOParser.RenamecolumnContext ctx) {
     return new SMORenameColumn(ctx.ID(0).getText(), ctx.ID(2).getText(), ctx.ID(1).getText());
   }
   
-  public SMOCommand visitCopyColumn(SMOParser.CopycolumnContext ctx) {
-    return new SMOCopyColumn(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText(),ctx.swallow_to_semi().getText() );
+  public SMOCommand visitCopycolumn(SMOParser.CopycolumnContext ctx) {
+    if (ctx.swallow_to_semi()!= null)
+      return new SMOCopyColumn(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText(),
+        ctx.swallow_to_semi().getText() );
+    else 
+      return new SMOCopyColumn(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText(),
+          "");
     
+  }
+  
+  public SMOCommand visitNop(SMOParser.NoopContext ctx) {
+    return new SMONop();
   }
  
   public static void main(String[] args) {

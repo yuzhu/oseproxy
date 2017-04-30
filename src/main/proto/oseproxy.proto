@@ -19,7 +19,10 @@ service OSEProxy {
   rpc execSMO(SMORequest) returns (SMOReply) {}
   rpc execUpdate(UpdateRequest) returns (UpdateReply) {}
   rpc execSMOString(SMOStringRequest) returns (SMOReply) {}
+  rpc commitStack(StackRequest) returns (OKReply){}
+  rpc rollbackStack(StackRequest) returns (OKReply){}
 }
+
 
 // The request message containing the user's name.
 message ConnRequest {
@@ -29,6 +32,14 @@ message ConnRequest {
   string username = 4;
   string password = 5;
   string clientID = 100;
+}
+
+message StackRequest {
+  string connId = 1;  
+}
+
+message OKReply {
+  bool status = 1;
 }
 
 // The response message containing the greetings
