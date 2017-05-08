@@ -29,7 +29,7 @@ public class SMOCopyTable extends SMOSimpleCommand {
   @Override
   public void executeSMO() {
     String createTableString = "CREATE TABLE %s AS SELECT * FROM %s;";
-    String cmdString = String.format(createTableString, this.fromName, this.toName);
+    String cmdString = String.format(createTableString, this.toName, this.fromName);
     try {
       Statement stmt = conn.createStatement(); 
       stmt.executeUpdate( (cmdString));

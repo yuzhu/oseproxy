@@ -58,7 +58,10 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
   }
   
   public SMOCommand visitAddcolumn(SMOParser.AddcolumnContext ctx) {
-    return new SMOAddColumn(ctx.ID(0).getText(), ctx.expr().getText(), ctx.ID(1).getText());
+    if (ctx.expr() == null)
+      return  new SMOAddColumn(ctx.ID(0).getText(), "", ctx.ID(1).getText());
+    else 
+      return new SMOAddColumn(ctx.ID(0).getText(), ctx.expr().getText(), ctx.ID(1).getText());
   }
   
   public SMOCommand visitDropcolumn(SMOParser.DropcolumnContext ctx) {

@@ -139,7 +139,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     try {
       Statement stmt = conn.createStatement();
       for (String viewName : this.getViews()){
-        stmt.execute("CONVERT " + viewName + ";");
+        stmt.executeUpdate("CONV " + viewName + ";");
       }
     } catch (SQLException e) {
       // TODO Auto-generated catch block

@@ -2,6 +2,7 @@ package ucb.oseproxy.smo;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,7 +26,10 @@ public class SMOCreateTable extends SMOSimpleCommand {
   private List<String> columnList;
   public SMOCreateTable(String tableName, String collist) {
     this.tableName = tableName;
-    columnList = Arrays.asList(collist.split(","));
+    if (collist.equals(""))
+      columnList = new ArrayList<String>();
+    else
+      columnList = Arrays.asList(collist.split(","));
   }
 
   public SMOCreateTable(String tableName, List<String> collist) {

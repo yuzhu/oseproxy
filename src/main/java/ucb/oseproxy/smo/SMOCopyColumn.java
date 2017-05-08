@@ -51,10 +51,12 @@ public class SMOCopyColumn extends SMOSimpleCommand {
       cmdString = String.format(alterTableString, this.toTable, this.newColName);
       String insertColString = "update %s set %s = (select %s from %s where %s);";
       String cmd2String =  String.format(insertColString, this.toTable, this.newColName, this.newColName,
-          this.toTable, this.cond);
+          this.fromTable, this.cond);
       try {
         Statement stmt = conn.createStatement(); 
-        
+        // System.out.println(cmdString);
+        // System.out.println(cmd2String);
+
         stmt.executeUpdate((cmdString));
         stmt.executeUpdate((cmd2String));
       } catch (SQLException e) {

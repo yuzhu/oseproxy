@@ -233,6 +233,13 @@ public class SMOMerge extends SMOAbstractCommand {
   @Override
   public boolean commitSMO() {
     // TODO Auto-generated method stub
+    try {
+      dropTriggers();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    convertViews();
     return true;
   }
 
