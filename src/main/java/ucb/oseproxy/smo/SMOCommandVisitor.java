@@ -53,7 +53,7 @@ public class SMOCommandVisitor extends SMOBaseVisitor<SMOCommand> {
     List<String> options = new ArrayList<String>(6);
     options.add(ctx.ID(0).getText());
     return new SMODecompose(ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.ID(2).getText(),
-        ctx.bracketlist(0).columnlist().getText(), ctx.bracketlist(1).columnlist().getText()
+        ctx.bracketlist(0).columnlist().getText(), ctx.bracketlist(1).columnlist().getText(), ctx.bracketlist(2).columnlist().getText()
         );
   }
   

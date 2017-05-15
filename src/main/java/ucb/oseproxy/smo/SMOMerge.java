@@ -229,20 +229,6 @@ public class SMOMerge extends SMOAbstractCommand {
     }
     return sb.toString();
   }
-
-  @Override
-  public boolean commitSMO() {
-    // TODO Auto-generated method stub
-    try {
-      dropTriggers();
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    convertViews();
-    return true;
-  }
-
   
   /*  
    * rollback a merge means to drop the view created, 

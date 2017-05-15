@@ -319,12 +319,6 @@ public class SMOPartitionTable extends SMOAbstractCommand {
     return sb.toString();
   }
   
-  @Override
-  public boolean commitSMO() {
-    // TODO Auto-generated method stub
-    return true;
-  }
-
   
   /*  
    * rollback a merge means to drop the view created, 

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import ucb.oseproxy.rpc.ProxyServer;
@@ -19,7 +20,7 @@ public class OSEServer {
   private static OSEServer instance = null;
   private static final Logger logger = Logger.getLogger(ProxyServer.class.getName());
   // map a connID to connection
-  private HashMap<String, Connection> connMap;
+  private ConcurrentHashMap<String, Connection> connMap;
   // map a resultSetId to a ResultSet
   private HashMap<String, ResultSet> rsMap;
   // map a db to a SMO
@@ -27,14 +28,14 @@ public class OSEServer {
   
   private HashMap<String, Stack<SMOCommand>> smoStackMap;
 
-  public static OSEServer getInstance() {
+  public synchronized static OSEServer getInstance() {
     if (instance == null)
       instance = new OSEServer();
     return instance;
   }
 
   protected OSEServer() {
-    connMap = new HashMap<String, Connection>();
+    connMap = new ConcurrentHashMap<String, Connection>();
     rsMap = new HashMap<String, ResultSet>();
     smoMap = new HashMap<String, SMOCommand>();
     smoStackMap = new HashMap<String, Stack<SMOCommand>>();
@@ -47,7 +48,7 @@ public class OSEServer {
 
   }
 
-  public String connectClient(String clientID, String host, int port, String dbname, String username,
+  public synchronized String connectClient(String clientID, String host, int port, String dbname, String username,
       String password) {
     String db_url = String.format(DB_URL, host, port, dbname);
     try {
@@ -55,7 +56,11 @@ public class OSEServer {
       logger.info("Connecting to database"  + db_url);
       Connection conn = DriverManager.getConnection(db_url, username, password);
       String uuid = ProxyUtil.randomId();
+      if (conn == null ) logger.warning("Drivemanager returned null connection");
+      //logger.info("putting in connMap" + uuid);
+      
       connMap.put(uuid, conn);
+      //logger.info(connMap.toString());
       Stack<SMOCommand> newstack = new Stack<SMOCommand>();
       smoStackMap.put(uuid, newstack);
       
@@ -66,7 +71,7 @@ public class OSEServer {
       // TODO: Solve concurrent update issue 
       // stmt.executeUpdate("CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$ if ($_SHARED{$_[0]} = $_[1]) {return 'ok';} else { return \"can't set shared variable $_[0] to $_[1]\";}$$ LANGUAGE plperl;");
       // stmt.executeUpdate("CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$return $_SHARED{$_[0]};$$ LANGUAGE plperl;");
-      
+      logger.info("connection string" + uuid);
       return uuid;
     } catch (SQLException se) {
       logger.warning("SQL exception" + se.getMessage());
@@ -92,8 +97,10 @@ public class OSEServer {
   }
   
   public String execQuery(String connId, String query) {
+    //logger.info("trying to get connection " +connId);
     Connection conn = this.getConnection(connId);
     if (conn == null) {
+      logger.warning("connection null for " + connId);
       return null;
     }
     Statement stmt;
@@ -187,9 +194,13 @@ public class OSEServer {
 
   public Connection getConnection(String connId) {
     if (connMap != null) {
+      logger.info(connMap.toString());
       return connMap.get(connId);
     } else
+    {
+      logger.warning("connMap is null");
       return null;
+    }  
   }
 
   public Map<String, Object> getNextRow(String resultSetId) {

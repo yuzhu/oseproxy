@@ -33,18 +33,14 @@ public class SMODecompose extends SMOAbstractCommand {
     }
   }
   
-  public SMODecompose(String tablename, String view1, String view2, String collist1, String collist2) {
+  public SMODecompose(String tablename, String view1, String view2, String tableCol, String collist1, String collist2) {
     table = tablename;
     tables.add(table);
     view1columns = collist1;
     view2columns = collist2;
+    this.tablecolumns = tableCol;
     views.add(view1);
     views.add(view2);
-  }
-  public void connect(Connection conn){
-    super.connect(conn);
-    if (tablecolumns == null)
-      Utils.getColumns(conn, table);
   }
   
   public SMODecompose(Connection conn, Command cmd2, List<String> args) {
@@ -286,11 +282,7 @@ public class SMODecompose extends SMOAbstractCommand {
     
  
   }
-  @Override
-  public boolean commitSMO() {
-    
-    return true;
-  }
+  
   @Override
   public boolean rollbackSMO() {
     Statement stmt;

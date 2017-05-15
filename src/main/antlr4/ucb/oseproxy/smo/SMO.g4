@@ -13,7 +13,7 @@ smo_statement
   |COPY_TABLE ID INTO ID    # copytable
   |MERGE_TABLE ID COMMA ID INTO ID   # mergetable
   |PARTITION_TABLE ID INTO ID COMMA ID WHERE swallow_to_semi  # partitiontable
-  |DECOMPOSE_TABLE ID INTO ID bracketlist COMMA ID bracketlist # decomposetable
+  |DECOMPOSE_TABLE ID INTO bracketlist COMMA ID bracketlist COMMA ID bracketlist # decomposetable
   |JOIN_TABLE ID COMMA ID INTO ID WHERE swallow_to_semi   #jointable
   |ADD_COLUMN ID (AS expr)? INTO ID  #addcolumn
   |DROP_COLUMN ID FROM ID # dropcolumn

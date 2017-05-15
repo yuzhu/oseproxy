@@ -159,10 +159,10 @@ public abstract class SMOAbstractCommand implements SMOCommand {
       dropViews(stmt);
       
       
-      createTriggers(stmt);
+      //createTriggers(stmt);
       
       createViews(stmt);
-      createReverseTriggers(stmt);
+      //createReverseTriggers(stmt);
        
       stmt.executeBatch();
       conn.commit();
@@ -185,7 +185,16 @@ public abstract class SMOAbstractCommand implements SMOCommand {
 
 
   @Override
-  public boolean commitSMO() {return false;}
+  public boolean commitSMO() {    
+    try {
+    dropTriggers();
+  } catch (SQLException e) {
+    // TODO Auto-generated catch block
+    e.printStackTrace();
+  }
+  convertViews();
+  return true;
+  }
   public boolean rollbackSMO() {return false;}
   @Override
   public boolean isReversible() {

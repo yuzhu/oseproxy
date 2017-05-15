@@ -190,12 +190,6 @@ public class SMOJoinTable extends SMOAbstractCommand {
 
   }
   
-  @Override
-  public boolean commitSMO() {
-    // TODO Auto-generated method stub
-    return true;
-  }
-
   
   /*  
    * rollback a join means to drop the view created.

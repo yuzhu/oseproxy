@@ -131,12 +131,13 @@ public class ProxyServer {
 
     @Override
     public void execQuery(QueryRequest req, StreamObserver<QueryReply> responseObserver) {
-      //logger.info("Executing query on behalf of " + req.getConnId() + "  " + req.getQuery());
+     // logger.info("Executing query on behalf of " + req.getConnId() + "  " + req.getQuery());
       String resultset = OSEServer.getInstance().execQuery(req.getConnId(), req.getQuery());
+      logger.info("result set string" + resultset);
       ResultSet rs = OSEServer.getInstance().getResultSet(resultset);
       QueryReply reply = null;
       if (rs == null) {
-        reply = QueryReply.newBuilder().setResultSetId(null).build();
+        reply = QueryReply.newBuilder().setResultSetId("").build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();
         return;
@@ -162,7 +163,7 @@ public class ProxyServer {
     
     @Override
     public void execUpdate(UpdateRequest req, StreamObserver<UpdateReply> responseObserver) {
-      // logger.info("Executing update on behalf of " + req.getConnId() + "  " + req.getQuery());
+      //logger.info("Executing update on behalf of " + req.getConnId() + "  " + req.getQuery());
       int returnVal = OSEServer.getInstance().execUpdate(req.getConnId(), req.getQuery());
       UpdateReply reply = null;
       reply = UpdateReply.newBuilder().setRowCount(returnVal).build();
