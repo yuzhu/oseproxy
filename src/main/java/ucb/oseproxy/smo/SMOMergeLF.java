@@ -80,6 +80,7 @@ public class SMOMergeLF extends SMOAbstractCommand {
     String triggerTemplate = "CREATE TRIGGER %s"
         + " AFTER INSERT OR UPDATE OR DELETE ON %s FOR EACH ROW EXECUTE PROCEDURE trigger_async_log(%d)";
     String triggerString = String.format(triggerTemplate, triggerName, tableName, iteration);
+    logger.info("Trigger installed " + triggerString);
     stmt.addBatch(triggerString);
   }
   
@@ -102,6 +103,7 @@ public class SMOMergeLF extends SMOAbstractCommand {
         count += propHistory(conn, table, view, iteration);
       }
     }
+    logger.info("prop " + count);
     return count;
   }
   
@@ -144,6 +146,7 @@ public class SMOMergeLF extends SMOAbstractCommand {
         stmt.executeUpdate(query);
       }
     }
+  @Override
   public void executeSMO() {
     // Create new view based on 
     
@@ -171,7 +174,6 @@ public class SMOMergeLF extends SMOAbstractCommand {
       // stmt.executeBatch();
       // conn.commit();
       conn.setAutoCommit(true);
-      convertViews();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
