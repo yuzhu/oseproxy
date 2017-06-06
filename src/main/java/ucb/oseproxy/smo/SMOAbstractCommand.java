@@ -56,6 +56,23 @@ public abstract class SMOAbstractCommand implements SMOCommand {
     logger.info("attach trigger \n" + sb.toString());
   }
   
+  protected void attachTriggerWithParam(Statement stmt, String tablename, String triggerName,  String triggerFunc, String params, String op) throws SQLException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("CREATE TRIGGER ");
+    sb.append(triggerName);
+    sb.append(" BEFORE ");
+    sb.append(op);
+    sb.append(" on ");
+    sb.append(tablename);
+    sb.append(" FOR EACH ROW WHEN (pg_trigger_depth() < 1) EXECUTE PROCEDURE ");
+    sb.append(triggerFunc);
+    sb.append("(");
+    sb.append(params);
+    sb.append(");");
+    stmt.addBatch(sb.toString());
+    logger.info("attach trigger \n" + sb.toString());
+  }
+  
   protected Connection getConn()  {
     return conn;
   }
@@ -159,7 +176,7 @@ public abstract class SMOAbstractCommand implements SMOCommand {
       dropViews(stmt);
       
       
-      //createTriggers(stmt);
+      createTriggers(stmt);
       
       createViews(stmt);
       //createReverseTriggers(stmt);

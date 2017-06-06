@@ -36,12 +36,6 @@ public class SMOFactoryTest extends TestCase {
     assertTrue(smort.getFromName().equals("cur"));
     assertTrue(smort.getToName().equals("cur_text"));
     
-    String testMergeTable = "MERGE TABLE cur_text, old_text  INTO text;";
-    smo = SMOFactory.getSMO(testMergeTable);
-    assertTrue(smo instanceof SMOMerge);
-    assertTrue(((SMOMerge)smo).getTables().get(0).equals("cur_text"));
-    assertTrue(((SMOMerge)smo).getTables().get(1).equals("old_text"));
-    assertTrue(((SMOMerge)smo).getViews().get(0).equals("text"));
     
     String testPartitionTable = "PARTITION TABLE table INTO table1, table2 WHERE table.col1 = 'OLD';";
     smo = SMOFactory.getSMO(testPartitionTable);
